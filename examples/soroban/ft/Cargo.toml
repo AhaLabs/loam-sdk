@@ -13,11 +13,6 @@ doctest = false
 [dependencies]
 loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
 loam-subcontract-core = { workspace = true }
-loam-subcontract-ft = { workspace = true }
-
 
 [dev_dependencies]
 loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
-
-[package.metadata.loam]
-contract = true

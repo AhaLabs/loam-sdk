@@ -1,5 +1,5 @@
 [package]
-name = "errors"
+name = "example-errors"
 version = "0.0.0"
 authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
@@ -11,12 +11,8 @@ crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
-loam-sdk = { workspace = true }
-loam-sdk-core-riff = { workspace = true }
-
+loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
+loam-subcontract-core = { workspace = true }
 
 [dev_dependencies]
 loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
-
-[package.metadata.loam]
-contract = true

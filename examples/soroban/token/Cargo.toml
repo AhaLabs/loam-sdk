@@ -1,29 +1,18 @@
 [package]
-name = "soroban-token-contract"
-description = "Soroban standard token contract"
-version = "0.0.6"
+name = "example-token"
+version = "0.0.0"
+authors = ["Stellar Development Foundation <info@stellar.org>"]
+license = "Apache-2.0"
 edition = "2021"
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
+doctest = false
 
 [dependencies]
-soroban-sdk = { version = "0.7.0", git = "https://github.com/stellar/rs-soroban-sdk", rev = "9bbac60c25cee9aa995025db5af828c243d15690"}
-soroban-token-sdk = { version = "0.7.0", git = "https://github.com/stellar/rs-soroban-sdk", rev = "9bbac60c25cee9aa995025db5af828c243d15690"}
+loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
+loam-subcontract-core = { workspace = true }
 
 [dev_dependencies]
-soroban-sdk = { version = "0.7.0", git = "https://github.com/stellar/rs-soroban-sdk", rev = "9bbac60c25cee9aa995025db5af828c243d15690", features = ["testutils"] }
-
-[profile.release]
-opt-level = "z"
-overflow-checks = true
-debug = 0
-strip = "symbols"
-debug-assertions = false
-panic = "abort"
-codegen-units = 1
-lto = true
-
-[profile.release-with-logs]
-inherits = "release"
-debug-assertions = true
+loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
