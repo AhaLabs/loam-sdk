@@ -2,6 +2,7 @@
 use loam_sdk::derive_contract;
 
 pub mod subcontract;
+pub mod error;
 
 use subcontract::{Account, AccountManager};
 

@@ -1,11 +1,11 @@
 use loam_sdk::{
-    soroban_sdk::{self, Lazy, BytesN, Env, Vec},
-    subcontract,
+    soroban_sdk::{self, auth::Context, contracttype, env, BytesN, Env, Lazy, Map, Symbol, Vec},
+    subcontract, IntoKey
 };
-use soroban_auth::AuthorizationContext;
 
 use crate::error::AccError;
-use crate::Signature;
+
+const TRANSFER_FN: Symbol = Symbol::short("transfer");
 
 #[contracttype]
 #[derive(Clone)]
@@ -28,10 +28,9 @@ pub trait IsAccount {
     fn add_limit(&self, token: BytesN<32>, limit: i128);
     fn __check_auth(
         &self,
-        env: Env,
         signature_payload: BytesN<32>,
         signatures: Vec<Signature>,
-        auth_context: Vec<AuthorizationContext>,
+        auth_context: Vec<Context>,
     ) -> Result<(), AccError>;
 }
 
@@ -40,12 +39,12 @@ impl IsAccount for AccountManager {
         // In reality this would need some additional validation on signers
         // (deduplication etc.).
         for signer in signers.iter() {
-            env.storage().set(&DataKey::Signer(signer.unwrap()), &());
+            self.signers.set(signer, &());
         }
-        env().storage().set(&DataKey::SignerCnt, &signers.len());
+        self.count = &signers.len();
     }
 
-    fn add_limit(&mut self, token: BytesN<32>, limit: i128) {
+    fn add_limit(&self, token: BytesN<32>, limit: i128) {
         // The current contract address is the account contract address and has
         // the same semantics for `require_auth` call as any other account
         // contract address.
@@ -87,10 +86,10 @@ impl IsAccount for AccountManager {
         &self,
         signature_payload: BytesN<32>,
         signatures: Vec<Signature>,
-        auth_context: Vec<AuthorizationContext>,
+        auth_context: Vec<Context>,
     ) -> Result<(), AccError> {
         // Perform authentication.
-        authenticate(&env, &signature_payload, &signatures)?;
+        authenticate(env(), &self.signers, &signature_payload, &signatures)?;
 
         let tot_signers: u32 = &self.count;
         let all_signed = tot_signers == signatures.len();
@@ -106,6 +105,7 @@ impl IsAccount for AccountManager {
         for context in auth_context.iter() {
             verify_authorization_policy(
                 &env,
+                &self.limits,
                 &context.unwrap(),
                 &curr_contract_id,
                 all_signed,
@@ -118,20 +118,19 @@ impl IsAccount for AccountManager {
 
 fn authenticate(
     env: &Env,
+    signers: Map<BytesN<32>, i128>, 
     signature_payload: &BytesN<32>,
     signatures: &Vec<Signature>,
 ) -> Result<(), AccError> {
     for i in 0..signatures.len() {
-        let signature = signatures.get_unchecked(i).unwrap();
+        let signature: Signature = signatures.get_unchecked(i).unwrap();
         if i > 0 {
             let prev_signature = signatures.get_unchecked(i - 1).unwrap();
             if prev_signature.public_key >= signature.public_key {
                 return Err(AccError::BadSignatureOrder);
             }
         }
-        if !env
-            .storage()
-            .has(&DataKey::Signer(signature.public_key.clone()))
+        if signers.has(signature.public_key.clone())
         {
             return Err(AccError::UnknownSigner);
         }
@@ -146,7 +145,8 @@ fn authenticate(
 
 fn verify_authorization_policy(
     env: &Env,
-    context: &AuthorizationContext,
+    limits: Map<BytesN<32>, i128>, 
+    context: &Context,
     curr_contract_id: &BytesN<32>,
     all_signed: bool,
     spend_left_per_token: &mut Map<BytesN<32>, i128>,
@@ -166,9 +166,8 @@ fn verify_authorization_policy(
     let spend_left: Option<i128> =
         if let Some(spend_left) = spend_left_per_token.get(context.contract.clone()) {
             Some(spend_left.unwrap())
-        } else if let Some(limit_left) = env
-            .storage()
-            .get(&DataKey::SpendLimit(context.contract.clone()))
+        } else if let Some(limit_left) = limits
+            .get(context.contract.clone())
         {
             Some(limit_left.unwrap())
         } else {
