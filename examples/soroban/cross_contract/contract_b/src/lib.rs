@@ -1,20 +1,15 @@
 #![no_std]
+use loam_subcontract_core::{admin::Admin, Core};
 
-use loam_sdk::soroban_sdk::{self, contract, contractimpl, Address, Env};
+pub mod error;
+pub mod subcontract;
+
+pub use error::Error;
+use subcontract::{ContractB, IsContractB};
 
 loam_sdk::import_contract!(contract_a);
 
-#[contract]
-pub struct ContractB;
-
-#[contractimpl]
-impl ContractB {
-    pub fn add_with(env: Env, contract_id: Address, x: u32, y: u32) -> u32 {
-        let client = contract_a::Client::new(&env, &contract_id);
-        client.add(&x, &y)
-    }
-}
-
-smartdeploy_sdk::core_riff!();
+#[loam_sdk::derive_contract(Core(Admin), ContractB(ContractB))]
+pub struct Contract;
 
 mod test;

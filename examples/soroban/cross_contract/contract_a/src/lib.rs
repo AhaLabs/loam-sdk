@@ -1,15 +1,11 @@
 #![no_std]
+use loam_subcontract_core::{admin::Admin, Core};
 
-use loam_sdk::soroban_sdk::{self, contract, contractimpl};
+pub mod error;
+pub mod subcontract;
 
-#[contract]
-pub struct ContractA;
+pub use error::Error;
+use subcontract::{ContractA, IsContractA};
 
-#[contractimpl]
-impl ContractA {
-    pub fn add(x: u32, y: u32) -> u32 {
-        x.checked_add(y).expect("no overflow")
-    }
-}
-
-smartdeploy_sdk::core_riff!();
+#[loam_sdk::derive_contract(Core(Admin), ContractA(ContractA))]
+pub struct Contract;

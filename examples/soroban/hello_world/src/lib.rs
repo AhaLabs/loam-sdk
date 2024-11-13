@@ -1,13 +1,12 @@
+// examples/soroban/hello_world/src/lib.rs
 #![no_std]
-use soroban_sdk::{contractimpl, vec, Env, Symbol, Vec};
+use loam_subcontract_core::{admin::Admin, Core};
 
-pub struct HelloContract;
+pub mod subcontract;
 
-#[contractimpl]
-impl HelloContract {
-    pub fn hello(env: Env, to: Symbol) -> Vec<Symbol> {
-        vec![&env, Symbol::short("Hello"), to]
-    }
-}
+use subcontract::HelloWorld;
+
+#[loam_sdk::derive_contract(Core(Admin), HelloWorld)]
+pub struct Contract;
 
 mod test;

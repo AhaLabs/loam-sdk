@@ -1,20 +1,19 @@
 use loam_sdk::{
-    riff,
-    soroban_sdk::{self, contracttype, Lazy},
-    IntoKey,
+    soroban_sdk::{self, contracttype, IntoKey, Lazy},
+    subcontract,
 };
 
-#[riff]
-pub trait IsRiff {
+#[contracttype]
+#[derive(IntoKey, Default)]
+pub struct Counter(u32);
+
+#[subcontract]
+pub trait IsIncrementable {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32;
 }
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct Impl(u32);
-
-impl IsRiff for Impl {
+impl IsIncrementable for Counter {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32 {
         self.0 += 1;

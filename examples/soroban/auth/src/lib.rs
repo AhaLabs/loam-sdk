@@ -12,12 +12,11 @@
 // lib.rs
 
 #![no_std]
-use loam_sdk::derive_contract;
-use loam_subcontract_core::{admin::Admin, Core};
+use loam_sdk::{derive_contract, soroban_sdk::Address};
+use loam_subcontract_core::{admin::Admin,Core};
 
 mod subcontract;
 pub use subcontract::*;
 
 #[derive_contract(Core(Admin), Incrementable(IncrementContract))]
 pub struct Contract;
-//! a custom authentication scheme and a custom authorization policy.

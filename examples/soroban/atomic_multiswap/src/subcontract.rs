@@ -1,6 +1,6 @@
 // src/subcontract.rs
 use loam_sdk::{
-    soroban_sdk::{self, Address, BytesN, Env, Lazy, Vec},
+    soroban_sdk::{self, contracttype, Address, BytesN, Env, Lazy, Vec},
     subcontract,
 };
 
@@ -29,8 +29,8 @@ pub trait IsAtomicMultiSwap {
 }
 
 mod atomic_swap {
-    soroban_sdk::contractimport!(
-        file = "../atomic_swap/target/wasm32-unknown-unknown/release/soroban_atomic_swap_contract.wasm"
+    loam_sdk::soroban_sdk::contractimport!(
+        file = "../../../target/wasm32-unknown-unknown/release/soroban_atomic_swap_contract.wasm"
     );
 }
 
@@ -47,9 +47,8 @@ impl IsAtomicMultiSwap for AtomicMultiSwapContract {
         let mut swaps_b = swaps_b;
         let swap_client = atomic_swap::Client::new(&env, &swap_contract);
         for acc_a in swaps_a.iter() {
-            let acc_a = acc_a.unwrap();
             for i in 0..swaps_b.len() {
-                let acc_b = swaps_b.get(i).unwrap().unwrap();
+                let acc_b = swaps_b.get(i).unwrap();
 
                 if acc_a.amount >= acc_b.min_recv && acc_a.min_recv <= acc_b.amount {
                     if swap_client
