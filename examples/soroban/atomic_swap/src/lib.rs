@@ -4,6 +4,7 @@
 //! This example demonstrates how multi-party authorization can be implemented.
 #![no_std]
 use loam_subcontract_core::{admin::Admin, Core};
+use loam_sdk::soroban_sdk::{Address, BytesN};
 
 pub mod error;
 pub mod subcontract;
@@ -14,3 +15,4 @@ use subcontract::{AtomicSwap, AtomicSwapContract};
 #[loam_sdk::derive_contract(Core(Admin), AtomicSwap(AtomicSwapContract))]
 pub struct Contract;
  
+ mod test;

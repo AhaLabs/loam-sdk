@@ -1,15 +1,15 @@
-use loam_sdk::{soroban_sdk::{Symbol, Lazy}, subcontract, vec };
+use loam_sdk::{soroban_sdk::{self, Lazy, Symbol, Vec}, subcontract, vec };
 
 #[derive(Default, Lazy)]
 pub struct Hello;
 
 #[subcontract]
 pub trait IsHelloWorld {
-    fn hello(&self, to: Symbol) -> loam_sdk::soroban_sdk::Vec<Symbol>;
+    fn hello(&self, to: Symbol) -> Vec<Symbol>;
 }
 
 impl IsHelloWorld for Hello {
-    fn hello(&self, to: Symbol) -> loam_sdk::soroban_sdk::Vec<Symbol> {
+    fn hello(&self, to: Symbol) -> Vec<Symbol> {
         vec![Symbol::short("Hello"), to]
     }
 }

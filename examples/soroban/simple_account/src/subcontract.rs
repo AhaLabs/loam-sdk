@@ -11,9 +11,16 @@ pub struct SimpleAccountManager {
     owner: BytesN<32>,
 }
 
+impl Default for SimpleAccountManager {
+    fn default() -> Self {
+        SimpleAccountManager {
+            owner: BytesN::from_array(env(),&[0; 32]),
+        }
+    }
+}
 #[subcontract]
 pub trait IsSimpleAccount {
-    fn init(&self, public_key: BytesN<32>);
+    fn init(&mut self, public_key: BytesN<32>) -> Result<(), SimpleAccError>;
     fn __check_auth(
         &self,
         signature_payload: BytesN<32>,
@@ -23,11 +30,12 @@ pub trait IsSimpleAccount {
 }
 
 impl IsSimpleAccount for SimpleAccountManager {
-    fn init(&self, public_key: BytesN<32>) {
-        if self.owner.has() {
+    fn init(&mut self, public_key: BytesN<32>) -> Result<(), SimpleAccError> {
+        if !self.owner.is_empty() {
             return Err(SimpleAccError::OwnerAlreadySet);
         }
-        self.owner.set(&public_key);
+        self.owner = public_key;
+        Ok(())
     }
 
     #[allow(non_snake_case)]
@@ -41,11 +49,10 @@ impl IsSimpleAccount for SimpleAccountManager {
             return Err(SimpleAccError::IncorrectSignatureCount);
         }
         
-        let public_key = self.owner.get().unwrap();
         env().crypto().ed25519_verify(
-            &public_key,
+            &self.owner,
             &signature_payload.into(),
-            &signatures.get(0).unwrap().unwrap(),
+            &signatures.get(0).unwrap(),
         );
         
         Ok(())

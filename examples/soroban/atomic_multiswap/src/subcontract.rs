@@ -30,7 +30,7 @@ pub trait IsAtomicMultiSwap {
 
 mod atomic_swap {
     loam_sdk::soroban_sdk::contractimport!(
-        file = "../../../target/wasm32-unknown-unknown/release/soroban_atomic_swap_contract.wasm"
+        file = "../../../../target/wasm32-unknown-unknown/release/test_atomic_swap.wasm"
     );
 }
 

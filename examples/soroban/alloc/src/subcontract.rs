@@ -19,9 +19,9 @@ pub trait IsAlloc {
 impl IsAlloc for AllocContract {
     fn sum(&self, count: u32) -> Result<u32, Error> {
         let mut v1 = vec![];
-        (0..count).for_each(|i| v1.push(i));
+        (0..count).for_each(|i| v1.push_back(i));
 
-        let mut sum = 0;
+        let mut sum: u32 = 0; 
         for i in v1 {
             sum = sum.checked_add(i).ok_or(Error::Overflow)?;
         }

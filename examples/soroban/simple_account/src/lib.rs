@@ -7,15 +7,18 @@
 // examples/soroban/simple_account/src/lib.rs
 #![no_std]
 use loam_sdk::derive_contract;
+use loam_sdk::soroban_sdk::{Vec, BytesN, auth::Context};
+use loam_subcontract_core::{admin::Admin, Core};
 
 pub mod subcontract;
 pub mod error;
 
-use subcontract::SimpleAccountManager;
+use subcontract::{SimpleAccount, SimpleAccountManager};
+use error::SimpleAccError;
 
 #[derive_contract(
     Core(Admin),
-    Account(SimpleAccountManager),
+    SimpleAccount(SimpleAccountManager),
 )]
 pub struct Contract;
 

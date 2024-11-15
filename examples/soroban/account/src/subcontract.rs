@@ -62,7 +62,7 @@ impl IsAccount for AccountManager {
         // authorize the call on its own behalf and that wouldn't require any
         // user-side verification.
         env().current_contract_address().require_auth();
-        &self.limits.set(Address::from_string_bytes(&token.into()), limit);
+        self.limits.set(Address::from_string_bytes(&token.into()), limit);
     }
 
 

@@ -4,13 +4,14 @@ use loam_sdk::{
 };
 
 #[contracttype]
-#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default)]
 pub struct State {
     pub count: u32,
     pub last_incr: u32,
 }
 
-#[derive(IntoKey)]
+#[contracttype]
+#[derive(IntoKey, Default)]
 pub struct IncrementContract(State);
 
 #[subcontract]
@@ -18,6 +19,7 @@ pub trait IsIncrement {
     fn increment(&mut self, incr: u32) -> u32;
     fn get_state(&self) -> State;
 }
+
 
 impl IsIncrement for IncrementContract {
     fn increment(&mut self, incr: u32) -> u32 {
