@@ -7,10 +7,11 @@
 //! This example demonstrates how authorized calls can be batched together.
 #![no_std]
 use loam_subcontract_core::{admin::Admin, Core};
+use loam_sdk::soroban_sdk::{BytesN, Vec};
 
 pub mod subcontract;
 
-use subcontract::{AtomicMultiSwap, AtomicMultiSwapContract};
+use subcontract::{AtomicMultiSwap, AtomicMultiSwapContract, SwapSpec};
 
 #[loam_sdk::derive_contract(Core(Admin), AtomicMultiSwap(AtomicMultiSwapContract))]
 pub struct Contract;

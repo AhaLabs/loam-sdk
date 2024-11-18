@@ -1,8 +1,8 @@
 #![allow(unused)]
-use loam_sdk::soroban_sdk::{Address, Bytes, BytesN, Env, IntoVal};
+use loam_sdk::soroban_sdk::{self, Address, Bytes, BytesN, Env, IntoVal, contractimport};
 
-loam_sdk::soroban_sdk::contractimport!(
-    file = "../../../../target/wasm32-unknown-unknown/release/example_token.wasm"
+contractimport!(
+    file = "../../../target/wasm32-unknown-unknown/release/example_token.wasm"
 );
 
 pub fn create_contract(

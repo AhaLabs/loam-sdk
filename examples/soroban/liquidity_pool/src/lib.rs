@@ -5,7 +5,7 @@ use loam_subcontract_core::{admin::Admin, Core};
 use loam_sdk::soroban_sdk::{Address, BytesN};
 
 mod liquidity_pool;
-mod token;
+pub mod token;
 pub use liquidity_pool::*;
 
 #[derive_contract(Core(Admin), LiquidityPoolTrait(LiquidityPool))]

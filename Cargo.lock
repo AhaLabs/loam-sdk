@@ -1182,6 +1182,7 @@ version = "0.0.0"
 dependencies = [
  "loam-sdk",
  "loam-subcontract-core",
+ "num-integer",
 ]
 
 [[package]]
