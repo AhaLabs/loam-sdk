@@ -1128,6 +1128,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-deep-contract-auth"
+version = "0.0.0"
+dependencies = [
+ "loam-sdk",
+ "loam-subcontract-core",
+]
+
+[[package]]
 name = "example-errors"
 version = "0.0.0"
 dependencies = [
@@ -1227,6 +1235,14 @@ dependencies = [
 
 [[package]]
 name = "example-token"
+version = "0.0.0"
+dependencies = [
+ "loam-sdk",
+ "loam-subcontract-core",
+]
+
+[[package]]
+name = "example-ttl"
 version = "0.0.0"
 dependencies = [
  "loam-sdk",

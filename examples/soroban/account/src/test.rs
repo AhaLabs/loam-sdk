@@ -5,12 +5,12 @@ extern crate std;
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
 use rand::thread_rng;
-use soroban_auth::{testutils::EnvAuthUtils, AuthorizationContext};
-use loam_sdk::soroban_sdk::RawVal;
+//use loam_sdk::soroban_sdk::testutils::aut^i
+use loam_sdk::soroban_sdk::auth::Context;
 use loam_sdk::soroban_sdk::{testutils::BytesN as _, vec, BytesN, Env, IntoVal, Symbol};
 
 use crate::AccError;
-use crate::{AccountContract, AccountContractClient, Signature};
+use crate::{Contract, Signature};
 
 fn generate_keypair() -> Keypair {
     Keypair::generate(&mut thread_rng())
@@ -21,10 +21,10 @@ fn signer_public_key(e: &Env, signer: &Keypair) -> BytesN<32> {
 }
 
 fn create_account_contract(e: &Env) -> AccountContractClient {
-    AccountContractClient::new(e, &e.register_contract(None, AccountContract {}))
+    ContractClient::new(e, &e.register_contract(None, AccountContract {}))
 }
 
-fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> RawVal {
+fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) {
     Signature {
         public_key: signer_public_key(e, signer),
         signature: signer
@@ -40,8 +40,8 @@ fn token_auth_context(
     token_id: &BytesN<32>,
     fn_name: Symbol,
     amount: i128,
-) -> AuthorizationContext {
-    AuthorizationContext {
+) -> Context {
+    Context {
         contract: token_id.clone(),
         fn_name,
         args: ((), (), amount).into_val(e),
