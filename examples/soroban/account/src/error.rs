@@ -8,4 +8,5 @@ pub enum AccError {
     NegativeAmount = 2,
     BadSignatureOrder = 3,
     UnknownSigner = 4,
+    InvalidContext = 5,
 }

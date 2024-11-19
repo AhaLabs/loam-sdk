@@ -4,13 +4,19 @@ extern crate std;
 
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
+use loam_sdk::soroban_sdk::symbol_short;
+use loam_sdk::soroban_sdk::xdr::FromXdr;
+use loam_sdk::soroban_sdk::xdr::ToXdr;
+use loam_sdk::soroban_sdk::Address;
+use loam_sdk::soroban_sdk::FromVal;
+use loam_sdk::soroban_sdk::Val;
 use rand::thread_rng;
 //use loam_sdk::soroban_sdk::testutils::aut^i
-use loam_sdk::soroban_sdk::auth::Context;
-use loam_sdk::soroban_sdk::{testutils::BytesN as _, vec, BytesN, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::auth::{ContractContext, Context};
+use loam_sdk::soroban_sdk::{self, testutils::{BytesN as _, Address as _, AuthorizedFunction, AuthorizedInvocation}, vec, BytesN, Env, IntoVal, Symbol};
 
 use crate::AccError;
-use crate::{Contract, Signature};
+use crate::{SorobanContract__, SorobanContract__Client, Signature};
 
 fn generate_keypair() -> Keypair {
     Keypair::generate(&mut thread_rng())
@@ -20,11 +26,11 @@ fn signer_public_key(e: &Env, signer: &Keypair) -> BytesN<32> {
     signer.public.to_bytes().into_val(e)
 }
 
-fn create_account_contract(e: &Env) -> AccountContractClient {
-    ContractClient::new(e, &e.register_contract(None, AccountContract {}))
+fn create_account_contract(e: &Env) -> SorobanContract__Client {
+    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
 }
 
-fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) {
+fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {
     Signature {
         public_key: signer_public_key(e, signer),
         signature: signer
@@ -37,20 +43,21 @@ fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) {
 
 fn token_auth_context(
     e: &Env,
-    token_id: &BytesN<32>,
+    token_id: &Address,
     fn_name: Symbol,
     amount: i128,
 ) -> Context {
-    Context {
+    Context::Contract(ContractContext {
         contract: token_id.clone(),
         fn_name,
         args: ((), (), amount).into_val(e),
-    }
+    })
 }
 
 #[test]
 fn test_token_auth() {
-    let env: Env = Default::default();
+    let env = Env::default();
+    env.mock_all_auths();
 
     let account_contract = create_account_contract(&env);
 
@@ -65,24 +72,24 @@ fn test_token_auth() {
     ]);
 
     let payload = BytesN::random(&env);
-    let token = BytesN::random(&env);
+    let token = Address::generate(&env);
     // `__check_auth` can't be called directly, hence we need to use
-    // `invoke_account_contract_check_auth` testing utility that emulates being
+    // `try_invoke_contract_check_auth` testing utility that emulates being
     // called by the Soroban host during a `require_auth` call.
-    env.invoke_account_contract_check_auth::<AccError>(
-        &account_contract.contract_id,
+    env.try_invoke_contract_check_auth::<AccError>(
+        &account_contract.address,
         &payload,
-        &vec![&env, sign(&env, &signers[0], &payload)],
+        vec![&env, sign(&env, &signers[0], &payload)].into(),
         &vec![
             &env,
             token_auth_context(&env, &token, Symbol::new(&env, "transfer"), 1000),
         ],
     )
     .unwrap();
-    env.invoke_account_contract_check_auth::<AccError>(
-        &account_contract.contract_id,
+    env.try_invoke_contract_check_auth::<AccError>(
+        &account_contract.address,
         &payload,
-        &vec![&env, sign(&env, &signers[0], &payload)],
+        vec![&env, sign(&env, &signers[0], &payload)].into(),
         &vec![
             &env,
             token_auth_context(&env, &token, Symbol::new(&env, "transfer"), 1000),
@@ -93,23 +100,29 @@ fn test_token_auth() {
     // Add a spend limit of 1000 per 1 signer.
     account_contract.add_limit(&token, &1000);
     // Verify that this call needs to be authorized.
+
     assert_eq!(
-        env.recorded_top_authorizations(),
+        env.auths(),
         std::vec![(
-            account_contract.address(),
-            account_contract.contract_id.clone(),
-            Symbol::short("add_limit"),
-            (token.clone(), 1000_i128).into_val(&env),
+            account_contract.address.clone(),
+            AuthorizedInvocation {
+                function: AuthorizedFunction::Contract((
+                    account_contract.address.clone(),
+                    symbol_short!("add_limit"),
+                    (token.clone(), 1000_i128).into_val(&env),
+                )),
+                sub_invocations: std::vec![]
+            }
         )]
     );
 
     // 1 signer no longer can perform the token operation that transfers more
     // than 1000 units.
     assert_eq!(
-        env.invoke_account_contract_check_auth::<AccError>(
-            &account_contract.contract_id,
+        env.try_invoke_contract_check_auth::<AccError>(
+            &account_contract.address,
             &payload,
-            &vec![&env, sign(&env, &signers[0], &payload)],
+            vec![&env, sign(&env, &signers[0], &payload)].into(),
             &vec![
                 &env,
                 token_auth_context(&env, &token, Symbol::new(&env, "transfer"), 1001)
@@ -121,13 +134,13 @@ fn test_token_auth() {
         AccError::NotEnoughSigners
     );
     assert_eq!(
-        env.invoke_account_contract_check_auth::<AccError>(
-            &account_contract.contract_id,
+        env.try_invoke_contract_check_auth::<AccError>(
+            &account_contract.address,
             &payload,
-            &vec![&env, sign(&env, &signers[0], &payload)],
+            vec![&env, sign(&env, &signers[0], &payload)].into(),
             &vec![
                 &env,
-                token_auth_context(&env, &token, Symbol::new(&env, "increase_allowance"), 1001)
+                token_auth_context(&env, &token, Symbol::new(&env, "approve"), 1001)
             ],
         )
         .err()
@@ -137,25 +150,26 @@ fn test_token_auth() {
     );
 
     // 1 signer can still transfer 1000 units.
-    env.invoke_account_contract_check_auth::<AccError>(
-        &account_contract.contract_id,
+    env.try_invoke_contract_check_auth::<AccError>(
+        &account_contract.address,
         &payload,
-        &vec![&env, sign(&env, &signers[0], &payload)],
+        vec![&env, sign(&env, &signers[0], &payload)].into(),
         &vec![
             &env,
-            token_auth_context(&env, &token, Symbol::new(&env, "increase_allowance"), 1000),
+            token_auth_context(&env, &token, Symbol::new(&env, "approve"), 1000),
         ],
     )
     .unwrap();
     // 2 signers can transfer any amount of token.
-    env.invoke_account_contract_check_auth::<AccError>(
-        &account_contract.contract_id,
+    env.try_invoke_contract_check_auth::<AccError>(
+        &account_contract.address,
         &payload,
-        &vec![
+        vec![
             &env,
             sign(&env, &signers[0], &payload),
             sign(&env, &signers[1], &payload),
-        ],
+        ]
+        .into(),
         &vec![
             &env,
             token_auth_context(&env, &token, Symbol::new(&env, "transfer"), 10000),

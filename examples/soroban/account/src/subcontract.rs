@@ -35,7 +35,7 @@ impl Default for AccountManager {
 #[subcontract]
 pub trait IsAccount {
     fn init(&mut self, signers: Vec<BytesN<32>>);
-    fn add_limit(&mut self, token: BytesN<32>, limit: i128);
+    fn add_limit(&mut self, token: Address, limit: i128);
     fn __check_auth(
         &self,
         signature_payload: BytesN<32>,
@@ -54,7 +54,7 @@ impl IsAccount for AccountManager {
         self.count = signers.len();
     }
 
-    fn add_limit(&mut self, token: BytesN<32>, limit: i128) {
+    fn add_limit(&mut self, token: Address, limit: i128) {
         // The current contract address is the account contract address and has
         // the same semantics for `require_auth` call as any other account
         // contract address.
@@ -62,7 +62,7 @@ impl IsAccount for AccountManager {
         // authorize the call on its own behalf and that wouldn't require any
         // user-side verification.
         env().current_contract_address().require_auth();
-        self.limits.set(Address::from_string_bytes(&token.into()), limit);
+        self.limits.set(token, limit);
     }
 
 
@@ -140,7 +140,7 @@ fn authenticate(
                 return Err(AccError::BadSignatureOrder);
             }
         }
-        if signers.contains_key(signature.public_key.clone())
+        if !signers.contains_key(signature.public_key.clone())
         {
             return Err(AccError::UnknownSigner);
         }
@@ -161,49 +161,56 @@ fn verify_authorization_policy(
     all_signed: bool,
     spend_left_per_token: &mut Map<Address, i128>,
 ) -> Result<(), AccError> {
+    let contract_context = match context {
+        Context::Contract(c) => {
+            if &c.contract == curr_contract {
+                if !all_signed {
+                    return Err(AccError::NotEnoughSigners);
+                }
+            }
+            c
+        }
+        Context::CreateContractHostFn(_) => return Err(AccError::InvalidContext),
+    };
     // For the account control every signer must sign the invocation.
-    if let Context::Contract(contract_context) = context {
-        if &contract_context.contract == curr_contract {
-            if !all_signed {
-                return Err(AccError::NotEnoughSigners);
-            }
-        }
 
-        // Otherwise, we're only interested in functions that spend tokens.
-        if contract_context.fn_name != TRANSFER_FN && contract_context.fn_name != Symbol::new(env, "increase_allowance") {
-            return Ok(());
-        }
+    // Otherwise, we're only interested in functions that spend tokens.
+    if contract_context.fn_name != TRANSFER_FN
+        && contract_context.fn_name != Symbol::new(env, "approve")
+    {
+        return Ok(());
+    }
 
-        let spend_left: Option<i128> =
-            if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
-                Some(spend_left)
-            } else if let Some(limit_left) = limits
-                .get(contract_context.contract.clone())
-            {
-                Some(limit_left)
-            } else {
-                None
-            };
 
-        // 'None' means that the contract is outside of the policy.
-        if let Some(spend_left) = spend_left {
-            // 'amount' is the third argument in both `approve` and `transfer`.
-            // If the contract has a different signature, it's safer to panic
-            // here, as it's expected to have the standard interface.
-            let spent: i128 = contract_context
-                .args
-                .get(2)
-                .unwrap()
-                .try_into_val(env)
-                .unwrap();
-            if spent < 0 {
-                return Err(AccError::NegativeAmount);
-            }
-            if !all_signed && spent > spend_left {
-                return Err(AccError::NotEnoughSigners);
-            }
-            spend_left_per_token.set(contract_context.contract.clone(), spend_left - spent);
+    let spend_left: Option<i128> =
+        if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
+            Some(spend_left)
+        } else if let Some(limit_left) = limits
+            .get(contract_context.contract.clone())
+        {
+            Some(limit_left)
+        } else {
+            None
+        };
+
+    // 'None' means that the contract is outside of the policy.
+    if let Some(spend_left) = spend_left {
+        // 'amount' is the third argument in both `approve` and `transfer`.
+        // If the contract has a different signature, it's safer to panic
+        // here, as it's expected to have the standard interface.
+        let spent: i128 = contract_context
+            .args
+            .get(2)
+            .unwrap()
+            .try_into_val(env)
+            .unwrap();
+        if spent < 0 {
+            return Err(AccError::NegativeAmount);
         }
+        if !all_signed && spent > spend_left {
+            return Err(AccError::NotEnoughSigners);
+        }
+        spend_left_per_token.set(contract_context.contract.clone(), spend_left - spent);
     }
     Ok(())
 }
