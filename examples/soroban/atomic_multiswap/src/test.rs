@@ -3,66 +3,78 @@ extern crate std;
 
 use super::*;
 use assert_unordered::assert_eq_unordered;
-use soroban_sdk::{testutils::Address as _, token, Address, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::{
+    self,
+    symbol_short,
+    testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
+    token, Address, Env, IntoVal,
+};
 use token::Client as TokenClient;
+use token::StellarAssetClient as TokenAdminClient;
 
-fn create_token_contract(e: &Env, admin: &Address) -> TokenClient {
-    TokenClient::new(e, &e.register_stellar_asset_contract(admin.clone()))
+fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, TokenAdminClient<'a>) {
+    let sac = e.register_stellar_asset_contract(admin.clone());
+    (
+        token::Client::new(e, &sac),
+        token::StellarAssetClient::new(e, &sac),
+    )
 }
 
-fn create_atomic_multiswap_contract(e: &Env) -> AtomicMultiSwapContractClient {
-    AtomicMultiSwapContractClient::new(e, &e.register_contract(None, AtomicMultiSwapContract {}))
+fn create_atomic_multiswap_contract(e: &Env) -> SorobanContract__Client {
+    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
 }
 
 #[test]
 fn test_atomic_multi_swap() {
-    let env: Env = Default::default();
+    let env = Env::default();
+    env.mock_all_auths_allowing_non_root_auth();
+
     let swaps_a = [
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 2000,
             min_recv: 290,
         },
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 3000,
             min_recv: 350,
         },
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 4000,
             min_recv: 301,
         },
     ];
     let swaps_b = [
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 300,
             min_recv: 2100,
         },
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 295,
             min_recv: 1950,
         },
         SwapSpec {
-            address: Address::random(&env),
+            address: Address::generate(&env),
             amount: 400,
             min_recv: 2900,
         },
     ];
 
-    let token_admin = Address::random(&env);
+    let token_admin = Address::generate(&env);
 
-    let token_a = create_token_contract(&env, &token_admin);
-    let token_b = create_token_contract(&env, &token_admin);
-    token_a.mint(&swaps_a[0].address, &2000);
-    token_a.mint(&swaps_a[1].address, &3000);
-    token_a.mint(&swaps_a[2].address, &4000);
+    let (token_a, token_a_admin) = create_token_contract(&env, &token_admin);
+    let (token_b, token_b_admin) = create_token_contract(&env, &token_admin);
+    token_a_admin.mint(&swaps_a[0].address, &2000);
+    token_a_admin.mint(&swaps_a[1].address, &3000);
+    token_a_admin.mint(&swaps_a[2].address, &4000);
 
-    token_b.mint(&swaps_b[0].address, &300);
-    token_b.mint(&swaps_b[1].address, &295);
-    token_b.mint(&swaps_b[2].address, &400);
+    token_b_admin.mint(&swaps_b[0].address, &300);
+    token_b_admin.mint(&swaps_b[1].address, &295);
+    token_b_admin.mint(&swaps_b[2].address, &400);
 
     let contract = create_atomic_multiswap_contract(&env);
 
@@ -70,8 +82,8 @@ fn test_atomic_multi_swap() {
 
     contract.multi_swap(
         &swap_contract_id,
-        &token_a.contract_id,
-        &token_b.contract_id,
+        &token_a.address,
+        &token_b.address,
         &Vec::from_array(&env, swaps_a.clone()),
         &Vec::from_array(&env, swaps_b.clone()),
     );
@@ -83,56 +95,124 @@ fn test_atomic_multi_swap() {
     // authorized calls, even though `multi_swap` was the overall top-level
     // invocation.
     assert_eq_unordered!(
-        env.recorded_top_authorizations(),
+        env.auths(),
         std::vec![
             (
                 swaps_a[0].address.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_a.contract_id.clone(),
-                    token_b.contract_id.clone(),
-                    2000_i128,
-                    290_i128
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_a.address.clone(),
+                            token_b.address.clone(),
+                            2000_i128,
+                            290_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_a.address.clone(),
+                            symbol_short!("transfer"),
+                            (
+                                swaps_a[0].address.clone(),
+                                swap_contract_id.clone(),
+                                2000_i128,
+                            )
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 swaps_a[1].address.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_a.contract_id.clone(),
-                    token_b.contract_id.clone(),
-                    3000_i128,
-                    350_i128
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_a.address.clone(),
+                            token_b.address.clone(),
+                            3000_i128,
+                            350_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_a.address.clone(),
+                            symbol_short!("transfer"),
+                            (
+                                swaps_a[1].address.clone(),
+                                swap_contract_id.clone(),
+                                3000_i128,
+                            )
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 swaps_b[1].address.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_b.contract_id.clone(),
-                    token_a.contract_id.clone(),
-                    295_i128,
-                    1950_i128,
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_b.address.clone(),
+                            token_a.address.clone(),
+                            295_i128,
+                            1950_i128,
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_b.address.clone(),
+                            symbol_short!("transfer"),
+                            (
+                                swaps_b[1].address.clone(),
+                                swap_contract_id.clone(),
+                                295_i128,
+                            )
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 swaps_b[2].address.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_b.contract_id.clone(),
-                    token_a.contract_id.clone(),
-                    400_i128,
-                    2900_i128,
-                )
-                    .into_val(&env),
-            )
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_b.address.clone(),
+                            token_a.address.clone(),
+                            400_i128,
+                            2900_i128,
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_b.address.clone(),
+                            symbol_short!("transfer"),
+                            (
+                                swaps_b[2].address.clone(),
+                                swap_contract_id.clone(),
+                                400_i128,
+                            )
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
+            ),
         ]
     );
     // Balance has to be checked after the auth checks because auth is only
@@ -156,9 +236,11 @@ fn test_atomic_multi_swap() {
 
 #[test]
 fn test_multi_swap_with_duplicate_account() {
-    let env: Env = Default::default();
-    let address_a = Address::random(&env);
-    let address_b = Address::random(&env);
+    let env = Env::default();
+    env.mock_all_auths_allowing_non_root_auth();
+
+    let address_a = Address::generate(&env);
+    let address_b = Address::generate(&env);
     let swaps_a = [
         SwapSpec {
             address: address_a.clone(),
@@ -184,12 +266,12 @@ fn test_multi_swap_with_duplicate_account() {
         },
     ];
 
-    let token_admin = Address::random(&env);
+    let token_admin = Address::generate(&env);
 
-    let token_a = create_token_contract(&env, &token_admin);
-    let token_b = create_token_contract(&env, &token_admin);
-    token_a.mint(&address_a, &3000);
-    token_b.mint(&address_b, &291);
+    let (token_a, token_a_admin) = create_token_contract(&env, &token_admin);
+    let (token_b, token_b_admin) = create_token_contract(&env, &token_admin);
+    token_a_admin.mint(&address_a, &3000);
+    token_b_admin.mint(&address_b, &291);
 
     let contract = create_atomic_multiswap_contract(&env);
 
@@ -197,8 +279,8 @@ fn test_multi_swap_with_duplicate_account() {
 
     contract.multi_swap(
         &swap_contract_id,
-        &token_a.contract_id,
-        &token_b.contract_id,
+        &token_a.address,
+        &token_b.address,
         &Vec::from_array(&env, swaps_a.clone()),
         &Vec::from_array(&env, swaps_b.clone()),
     );
@@ -206,56 +288,106 @@ fn test_multi_swap_with_duplicate_account() {
     // Notice that the same address may participate in multiple swaps. Separate
     // authorizations are recorded (and required on-chain) for every swap.
     assert_eq_unordered!(
-        env.recorded_top_authorizations(),
+        env.auths(),
         std::vec![
             (
                 address_a.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_a.contract_id.clone(),
-                    token_b.contract_id.clone(),
-                    1000_i128,
-                    100_i128
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_a.address.clone(),
+                            token_b.address.clone(),
+                            1000_i128,
+                            100_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_a.address.clone(),
+                            symbol_short!("transfer"),
+                            (address_a.clone(), swap_contract_id.clone(), 1000_i128,)
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 address_a.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_a.contract_id.clone(),
-                    token_b.contract_id.clone(),
-                    2000_i128,
-                    190_i128
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_a.address.clone(),
+                            token_b.address.clone(),
+                            2000_i128,
+                            190_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_a.address.clone(),
+                            symbol_short!("transfer"),
+                            (address_a.clone(), swap_contract_id.clone(), 2000_i128,)
+                                .into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 address_b.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_b.contract_id.clone(),
-                    token_a.contract_id.clone(),
-                    101_i128,
-                    1000_i128
-                )
-                    .into_val(&env),
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_b.address.clone(),
+                            token_a.address.clone(),
+                            101_i128,
+                            1000_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_b.address.clone(),
+                            symbol_short!("transfer"),
+                            (address_b.clone(), swap_contract_id.clone(), 101_i128,).into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
             ),
             (
                 address_b.clone(),
-                swap_contract_id.clone(),
-                Symbol::short("swap"),
-                (
-                    token_b.contract_id.clone(),
-                    token_a.contract_id.clone(),
-                    190_i128,
-                    2000_i128
-                )
-                    .into_val(&env),
-            )
+                AuthorizedInvocation {
+                    function: AuthorizedFunction::Contract((
+                        swap_contract_id.clone(),
+                        symbol_short!("swap"),
+                        (
+                            token_b.address.clone(),
+                            token_a.address.clone(),
+                            190_i128,
+                            2000_i128
+                        )
+                            .into_val(&env),
+                    )),
+                    sub_invocations: std::vec![AuthorizedInvocation {
+                        function: AuthorizedFunction::Contract((
+                            token_b.address.clone(),
+                            symbol_short!("transfer"),
+                            (address_b.clone(), swap_contract_id.clone(), 190_i128,).into_val(&env),
+                        )),
+                        sub_invocations: std::vec![]
+                    }]
+                }
+            ),
         ]
     );
 

@@ -4,7 +4,7 @@ use loam_sdk::{
 };
 
 #[contracttype]
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct State {
     pub count: u32,
     pub last_incr: u32,

@@ -1,5 +1,5 @@
 #![allow(unused)]
-use loam_sdk::soroban_sdk::{self, Address, Bytes, BytesN, Env, IntoVal, contractimport};
+use loam_sdk::soroban_sdk::{self, contractimport, xdr::ToXdr, Address, Bytes, BytesN, Env, IntoVal};
 
 contractimport!(
     file = "../../../target/wasm32-unknown-unknown/release/example_token.wasm"
@@ -8,12 +8,12 @@ contractimport!(
 pub fn create_contract(
     e: &Env,
     token_wasm_hash: &BytesN<32>,
-    token_a: &BytesN<32>,
-    token_b: &BytesN<32>,
+    token_a: &Address,
+    token_b: &Address,
 ) -> Address {
     let mut salt = Bytes::new(e);
-    salt.append(&token_a.clone().into());
-    salt.append(&token_b.clone().into());
+    salt.append(&token_a.to_xdr(e));
+    salt.append(&token_b.to_xdr(e));
     let salt = e.crypto().sha256(&salt);
     e.deployer()
         .with_current_contract(salt)

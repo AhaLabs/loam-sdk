@@ -1,20 +1,22 @@
 #![cfg(test)]
 
-use crate::{Deployer, DeployerClient};
+use crate::{SorobanContract__, SorobanContract__Client};
 use soroban_sdk::{Bytes, Env, IntoVal, Symbol};
 
 // The contract that will be deployed by the deployer contract.
 mod contract {
-    soroban_sdk::contractimport!(
+    use loam_sdk::soroban_sdk;
+
+    loam_sdk::soroban_sdk::contractimport!(
         file =
-            "../contract/target/wasm32-unknown-unknown/release/soroban_deployer_test_contract.wasm"
+            "../../../../target/wasm32-unknown-unknown/release/example_deployer.wasm"
     );
 }
 
 #[test]
 fn test() {
     let env = Env::default();
-    let client = DeployerClient::new(&env, &env.register_contract(None, Deployer));
+    let client = SorobanContract__Client::new(&env, &env.register_contract(None, SorobanContract__));
 
     // Install the WASM code to be deployed from the deployer contract.
     let wasm_hash = env.install_contract_wasm(contract::WASM);

@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use soroban_sdk::Env;
+use loam_sdk::soroban_sdk::Env;
 
 use crate::{
     contract_a::{ContractA, ContractAClient},

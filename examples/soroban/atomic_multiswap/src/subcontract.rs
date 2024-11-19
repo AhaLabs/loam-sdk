@@ -4,6 +4,8 @@ use loam_sdk::{
     subcontract,
 };
 
+use crate::atomic_swap;
+
 #[derive(Clone)]
 #[contracttype]
 pub struct SwapSpec {
@@ -19,33 +21,25 @@ pub struct AtomicMultiSwapContract;
 pub trait IsAtomicMultiSwap {
     fn multi_swap(
         &self,
-        swap_contract: BytesN<32>,
-        token_a: BytesN<32>,
-        token_b: BytesN<32>,
+        swap_contract: Address,
+        token_a: Address,
+        token_b: Address,
         swaps_a: Vec<SwapSpec>,
         swaps_b: Vec<SwapSpec>,
-    );
-}
-
-mod atomic_swap {
-    use loam_sdk::soroban_sdk;
-
-    loam_sdk::soroban_sdk::contractimport!(
-        file = "../../../target/wasm32-unknown-unknown/release/example_atomic_swap.wasm"
     );
 }
 
 impl IsAtomicMultiSwap for AtomicMultiSwapContract {
     fn multi_swap(
         &self,
-        swap_contract: BytesN<32>,
-        token_a: BytesN<32>,
-        token_b: BytesN<32>,
+        swap_contract: Address,
+        token_a: Address,
+        token_b: Address,
         swaps_a: Vec<SwapSpec>,
         swaps_b: Vec<SwapSpec>,
     ) {
         let mut swaps_b = swaps_b;
-        let swap_client = atomic_swap::Client::new(env(), &Address::from_string_bytes(&swap_contract.into()));
+        let swap_client = atomic_swap::Client::new(env(), &swap_contract);
         for acc_a in swaps_a.iter() {
             for i in 0..swaps_b.len() {
                 let acc_b = swaps_b.get(i).unwrap();

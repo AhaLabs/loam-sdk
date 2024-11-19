@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, Address, BytesN, env, IntoVal, Lazy, token},
+    soroban_sdk::{Address, env, IntoVal, Lazy, token},
     subcontract,
 };
 
@@ -14,8 +14,8 @@ pub trait IsAtomicSwap {
         &self,
         a: Address,
         b: Address,
-        token_a: BytesN<32>,
-        token_b: BytesN<32>,
+        token_a: Address,
+        token_b: Address,
         amount_a: i128,
         min_b_for_a: i128,
         amount_b: i128,
@@ -28,8 +28,8 @@ impl IsAtomicSwap for AtomicSwapContract {
         &self,
         a: Address,
         b: Address,
-        token_a: BytesN<32>,
-        token_b: BytesN<32>,
+        token_a: Address,
+        token_b: Address,
         amount_a: i128,
         min_b_for_a: i128,
         amount_b: i128,
@@ -49,24 +49,34 @@ impl IsAtomicSwap for AtomicSwapContract {
             (token_b.clone(), token_a.clone(), amount_b, min_a_for_b).into_val(env()),
         );
 
-        move_token(token_a, &a, &b, amount_a, min_a_for_b);
-        move_token(token_b, &b, &a, amount_b, min_b_for_a);
+        move_token(&token_a, &a, &b, amount_a, min_a_for_b);
+        move_token(&token_b, &b, &a, amount_b, min_b_for_a);
 
         Ok(())
     }
 }
 
+
 fn move_token(
-    token: BytesN<32>,
+    token: &Address,
     from: &Address,
     to: &Address,
-    approve_amount: i128,
+    max_spend_amount: i128,
     transfer_amount: i128,
 ) {
-    let token = token::Client::new(env(), &Address::from_string_bytes(&token.into()));
+    let token = token::Client::new(env(), token);
     let contract_address = env().current_contract_address();
-    // ledger entry of expiration
-    let ledger = env().ledger().sequence() + 1000;
-    token.approve(from, &contract_address, &approve_amount, &ledger);
-    token.transfer_from(&contract_address, &from, to, &transfer_amount);
+    // This call needs to be authorized by `from` address. It transfers the
+    // maximum spend amount to the swap contract's address in order to decouple
+    // the signature from `to` address (so that parties don't need to know each
+    // other).
+    token.transfer(from, &contract_address, &max_spend_amount);
+    // Transfer the necessary amount to `to`.
+    token.transfer(&contract_address, to, &transfer_amount);
+    // Refund the remaining balance to `from`.
+    token.transfer(
+        &contract_address,
+        from,
+        &(max_spend_amount - transfer_amount),
+    );
 }

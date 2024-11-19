@@ -18,7 +18,6 @@ pub trait IsIncrementable {
 impl IsIncrementable for Counter {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32 {
-        let count: u32 = self.0;
         self.0 += 1;
 
         // Publish an event about the increment occuring.
@@ -27,9 +26,9 @@ impl IsIncrementable for Counter {
         //   - The "increment" symbol.
         // The event data is the count.
         env().events()
-            .publish((COUNTER, Symbol::short("increment")), count);
+            .publish((COUNTER, Symbol::short("increment")), self.0);
 
         // Return the count to the caller.
-        count
+        self.0
     }
 }

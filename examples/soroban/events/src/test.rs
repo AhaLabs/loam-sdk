@@ -1,13 +1,13 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{testutils::Events, vec, Env, IntoVal};
+use loam_sdk::soroban_sdk::{self, testutils::Events, vec, Env, IntoVal, Symbol};
 
 #[test]
 fn test() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, IncrementContract);
-    let client = IncrementContractClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, SorobanContract__);
+    let client = SorobanContract__Client::new(&env, &contract_id);
 
     assert_eq!(client.increment(), 1);
     assert_eq!(client.increment(), 2);

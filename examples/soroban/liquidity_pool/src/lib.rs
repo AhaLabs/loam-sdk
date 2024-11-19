@@ -10,3 +10,5 @@ pub use liquidity_pool::*;
 
 #[derive_contract(Core(Admin), LiquidityPoolTrait(LiquidityPool))]
 pub struct Contract;
+
+mod test;

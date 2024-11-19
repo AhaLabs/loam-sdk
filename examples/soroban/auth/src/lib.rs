@@ -20,3 +20,5 @@ pub use subcontract::*;
 
 #[derive_contract(Core(Admin), Incrementable(IncrementContract))]
 pub struct Contract;
+
+mod test;
