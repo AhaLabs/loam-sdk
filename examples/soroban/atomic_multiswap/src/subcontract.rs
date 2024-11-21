@@ -44,8 +44,7 @@ impl IsAtomicMultiSwap for AtomicMultiSwapContract {
             for i in 0..swaps_b.len() {
                 let acc_b = swaps_b.get(i).unwrap();
 
-                if acc_a.amount >= acc_b.min_recv && acc_a.min_recv <= acc_b.amount {
-                    if swap_client
+                if acc_a.amount >= acc_b.min_recv && acc_a.min_recv <= acc_b.amount && swap_client
                         .try_swap(
                             &acc_a.address,
                             &acc_b.address,
@@ -56,11 +55,9 @@ impl IsAtomicMultiSwap for AtomicMultiSwapContract {
                             &acc_b.amount,
                             &acc_b.min_recv,
                         )
-                        .is_ok()
-                    {
-                        swaps_b.remove(i);
-                        break;
-                    }
+                        .is_ok() {
+                    swaps_b.remove(i);
+                    break;
                 }
             }
         }

@@ -6,13 +6,13 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::future::Future;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::process::Command as ProcessCommand;
 use tokio::time::{sleep, timeout};
 use tokio_stream::StreamExt;
 use toml::Value;
-use walkdir::WalkDir;
+
 
 pub struct TestEnv {
     pub temp_dir: TempDir,
@@ -52,19 +52,19 @@ impl TestEnv {
         }
     }
 
-    pub fn find_binary(&self, name: &str) -> Option<PathBuf> {
+    pub fn find_binary(name: &str) -> Option<PathBuf> {
         let exe_path = env::current_exe().ok()?;
-        let project_root = self.find_project_root(&exe_path)?;
+        let project_root = Self::find_project_root(&exe_path)?;
         Some(project_root.join("target").join("bin").join(name))
     }
 
-    fn find_project_root(&self, start_path: &PathBuf) -> Option<PathBuf> {
+    fn find_project_root(start_path: &Path) -> Option<PathBuf> {
         let mut current = start_path.clone();
         while let Some(parent) = current.parent() {
             if parent.join("Cargo.toml").exists() {
                 return Some(parent.to_path_buf());
             }
-            current = parent.to_path_buf();
+            current = parent;
         }
         None
     }
@@ -99,7 +99,7 @@ impl TestEnv {
                             return;
                         }
                     }
-                    Some(Err(e)) => println!("Error reading line: {:?}", e),
+                    Some(Err(e)) => println!("Error reading line: {e:?}"),
                     None => {
                         sleep(Duration::from_millis(100)).await;
                     }

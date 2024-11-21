@@ -4,7 +4,7 @@ use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, Lazy},
     subcontract,
 };
-use crate::token;
+use crate::example_token as token;
 use num_integer::Roots;
 
 #[contracttype]

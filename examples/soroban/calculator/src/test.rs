@@ -2,12 +2,10 @@
 extern crate std;
 
 use loam_sdk::soroban_sdk::{
-    self,
-    Env,
-    vec,
+    self, vec, ConversionError, Env, InvokeError
 };
 
-use crate::{SorobanContract__, SorobanContract__Client};
+use crate::{SorobanContract__, SorobanContract__Client, Error};
 
 #[test]
 fn test_calculator() {
@@ -25,8 +23,11 @@ fn test_calculator() {
 
     // Test addition overflow
     // FIXME - error type not properly being returned
-    //let result = calculator.try_add_u32(&u32::MAX, &1).expect("invoke failure");
-    //assert!(matches!(result, Err(crate::error::Error::Overflow)));
+    let result = calculator.try_add_u32(&u32::MAX, &1);
+    let Err(Ok(err)) = result else {
+        panic!("Expected an error, got {:?}", result);
+    };
+    assert_eq!(err, Error::Overflow);
 
     // Test the `two_array` function
     let expected_array: soroban_sdk::Vec<u32> = vec![&env, 3, 4];
