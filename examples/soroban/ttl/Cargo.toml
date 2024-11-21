@@ -13,9 +13,6 @@ doctest = false
 loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
 loam-subcontract-core = { workspace = true }
 
-[dev_dependencies]
-loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
-
 [profile.release]
 opt-level = "z"
 overflow-checks = true

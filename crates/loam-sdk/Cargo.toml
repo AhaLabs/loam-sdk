@@ -13,8 +13,6 @@ crate-type = ["rlib"]
 loam-sdk-macro = { path = "../loam-sdk-macro", version = "0.8.5" }
 loam-soroban-sdk = { path = "../loam-soroban-sdk", version = "0.6.15", optional = true }
 
-[target.'cfg(not(target_family="wasm"))'.dependencies]
-soroban-sdk = { workspace = true, features = ["testutils"], optional = true }
 
 [features]
 default = ["loam-soroban-sdk"]

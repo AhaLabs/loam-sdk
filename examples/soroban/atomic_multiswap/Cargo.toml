@@ -14,8 +14,7 @@ doctest = false
 loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
 loam-subcontract-core = { workspace = true }
 
-[dev_dependencies]
-loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
+[dev-dependencies]
 assert_unordered = "0.3.5"
 
 [package.metadata.loam]

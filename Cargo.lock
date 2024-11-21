@@ -1207,6 +1207,7 @@ dependencies = [
 name = "example-liquidity-pool"
 version = "0.0.0"
 dependencies = [
+ "example-token",
  "loam-sdk",
  "loam-subcontract-core",
  "num-integer",
@@ -3004,7 +3005,6 @@ version = "0.6.15"
 dependencies = [
  "loam-sdk-macro",
  "loam-soroban-sdk",
- "soroban-sdk",
 ]
 
 [[package]]
