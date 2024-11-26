@@ -2,7 +2,7 @@
 extern crate std;
 use std::println;
 
-use crate::{token, SorobanContract__Client, SorobanContract__};
+use crate::{token::example_token as token, SorobanContract__Client, SorobanContract__};
 
 use loam_sdk::soroban_sdk::{self, symbol_short, testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation}, Address, BytesN, Env, IntoVal, Symbol};
 
@@ -31,105 +31,6 @@ fn install_token_wasm(e: &Env) -> BytesN<32> {
         file = "../../../target/wasm32-unknown-unknown/release/example_token.wasm"
     );
     e.deployer().upload_contract_wasm(WASM)
-}
-
-#[test]
-fn test3() {
-    println!("hi");
-    let e = Env::default();
-    e.events().publish(
-        (Symbol::new(&e, "hello"),),
-        ()
-    );
-    e.mock_all_auths();
-    e.events().publish(
-        (Symbol::new(&e, "ho"),),
-        ()
-    );
-
-    let mut admin1 = Address::generate(&e);
-    let mut admin2 = Address::generate(&e);
-
-    let mut token1 = create_token_contract(&e, &admin1);
-    let mut token2 = create_token_contract(&e, &admin2);
-
-    if &token2.address < &token1.address {
-        // Logging the swap action
-        e.events().publish(
-            (Symbol::new(&e, "swap_tokens"),),
-            (token1.address.clone(), token2.address.clone()),
-        );
-        std::mem::swap(&mut token1, &mut token2);
-        std::mem::swap(&mut admin1, &mut admin2);
-    }
-
-    let user1 = Address::generate(&e);
-    let liqpool = create_liqpool_contract(
-        &e,
-        &install_token_wasm(&e),
-        &token1.address,
-        &token2.address,
-    );
-
-    e.events().publish(
-        (Symbol::new(&e, "liqpool_created"),),
-        (liqpool.address.clone(),),
-    );
-
-    let token_share = token::Client::new(&e, &liqpool.share_id());
-
-    e.events().publish((Symbol::new(&e, "mint_tokens"),), (user1.clone(), 1000));
-
-    token1.mint(&user1, &1000);
-    assert_eq!(token1.balance(&user1), 1000);
-
-    token2.mint(&user1, &1000);
-    assert_eq!(token2.balance(&user1), 1000);
-
-    // Log deposit details
-    e.events().publish(
-        (Symbol::new(&e, "deposit_start"),),
-        (user1.clone(), 100_i128, 100_i128),
-    );
-
-    liqpool.deposit(&user1, &100, &100, &100, &100);
-
-    // Log balances after deposit
-    e.events().publish(
-        (Symbol::new(&e, "post_deposit_balances"),),
-        (token1.balance(&user1), token2.balance(&user1)),
-    );
-
-    liqpool.swap(&user1, &false, &49, &100);
-
-    // Log balances after swap
-    e.events().publish(
-        (Symbol::new(&e, "post_swap_balances"),),
-        (token1.balance(&user1), token2.balance(&user1)),
-    );
-
-    e.budget().reset_unlimited();
-
-    // Log withdrawal details
-    e.events().publish(
-        (Symbol::new(&e, "withdraw_start"),),
-        (user1.clone(), 100_i128, 197_i128, 51_i128),
-    );
-
-    liqpool.withdraw(&user1, &100, &197, &51);
-
-    // Log final balances
-    e.events().publish(
-        (Symbol::new(&e, "final_balances"),),
-        (token1.balance(&user1), token2.balance(&user1), token_share.balance(&user1)),
-    );
-
-    assert_eq!(token1.balance(&user1), 1000);
-    assert_eq!(token2.balance(&user1), 1000);
-    assert_eq!(token_share.balance(&user1), 0);
-    assert_eq!(token1.balance(&liqpool.address), 0);
-    assert_eq!(token2.balance(&liqpool.address), 0);
-    assert_eq!(token_share.balance(&liqpool.address), 0);
 }
 
 #[test]

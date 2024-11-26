@@ -67,7 +67,7 @@ pub fn import_contract(tokens: TokenStream) -> TokenStream {
     let binding = dir.canonicalize().unwrap();
     let file = binding.to_str().unwrap();
     quote! {
-        mod #name {
+        pub mod #name {
             use loam_sdk::soroban_sdk;
             loam_sdk::soroban_sdk::contractimport!(file = #file);
         }

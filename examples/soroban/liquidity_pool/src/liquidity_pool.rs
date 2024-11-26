@@ -4,7 +4,7 @@ use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, Lazy},
     subcontract,
 };
-use crate::token;
+use crate::token::example_token as token;
 use num_integer::Roots;
 
 #[contracttype]
@@ -47,7 +47,7 @@ impl IsLiquidityPoolTrait for LiquidityPool {
             panic!("token_a must be less than token_b");
         }
 
-        let share_contract_id = token::create_contract(&env(), &token_wasm_hash, &token_a, &token_b);
+        let share_contract_id = crate::token::create_contract(env(), &token_wasm_hash, &token_a, &token_b);
         self.token_a = token_a;
         self.token_b = token_b;
         self.token_share = share_contract_id;
@@ -69,8 +69,8 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         // Calculate deposit amounts
         let amounts = get_deposit_amounts(desired_a, min_a, desired_b, min_b, reserve_a, reserve_b);
 
-        let token_a_client = token::Client::new(&env(), &self.token_a);
-        let token_b_client = token::Client::new(&env(), &self.token_b);
+        let token_a_client = token::Client::new(env(), &self.token_a);
+        let token_b_client = token::Client::new(env(), &self.token_b);
 
         token_a_client.transfer(&to, &env().current_contract_address(), &amounts.0);
         token_b_client.transfer(&to, &env().current_contract_address(), &amounts.1);
