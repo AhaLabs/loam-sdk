@@ -18,8 +18,8 @@ How this contract should be used:
 #[derive(IntoKey, Clone)]
 pub struct SingleOffer {
     seller: Address,
-    sell_token: BytesN<32>,
-    buy_token: BytesN<32>,
+    sell_token: Address,
+    buy_token: Address,
     sell_price: u32,
     buy_price: u32,
 }
@@ -28,8 +28,8 @@ impl Default for SingleOffer {
     fn default() -> Self {
         Self {
             seller: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
-            sell_token: BytesN::from_array(&env(), &[0; 32]),
-            buy_token: BytesN::from_array(&env(), &[0; 32]),
+            sell_token: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
+            buy_token: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
             sell_price: 0,
             buy_price: 0,
         }
@@ -43,13 +43,13 @@ pub trait IsSingleOfferTrait {
     fn create(
         &mut self,
         seller: Address,
-        sell_token: BytesN<32>,
-        buy_token: BytesN<32>,
+        sell_token: Address,
+        buy_token: Address,
         sell_price: u32,
         buy_price: u32,
     );
     fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128);
-    fn withdraw(&self, token: BytesN<32>, amount: i128);
+    fn withdraw(&self, token: Address, amount: i128);
     fn updt_price(&mut self, sell_price: u32, buy_price: u32);
     fn get_offer(&self) -> SingleOffer;
 }
@@ -58,8 +58,8 @@ impl IsSingleOfferTrait for SingleOffer {
     fn create(
         &mut self,
         seller: Address,
-        sell_token: BytesN<32>,
-        buy_token: BytesN<32>,
+        sell_token: Address,
+        buy_token: Address,
         sell_price: u32,
         buy_price: u32,
     ) {
@@ -87,7 +87,7 @@ impl IsSingleOfferTrait for SingleOffer {
     fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) {
         buyer.require_auth();
 
-        let sell_token_client = soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&self.sell_token.clone().into()));
+        let sell_token_client = soroban_sdk::token::Client::new(&env(), &self.sell_token.clone());
         let buy_token_client = soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&self.buy_token.clone().into()));
 
         let sell_token_amount = buy_token_amount
