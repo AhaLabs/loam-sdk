@@ -16,6 +16,8 @@ loam-subcontract-core = { workspace = true }
 
 [dev-dependencies]
 loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
+ed25519-dalek = { version = "1.0.1" }
+rand = { version = "0.7.3" }
 
 [package.metadata.loam]
 contract = true

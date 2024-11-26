@@ -4,23 +4,22 @@ extern crate std;
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
 use rand::thread_rng;
-use soroban_auth::testutils::EnvAuthUtils;
-use soroban_sdk::RawVal;
-use soroban_sdk::Status;
-use soroban_sdk::{testutils::BytesN as _, vec, BytesN, Env, IntoVal};
+use loam_sdk::soroban_sdk::Error;
+use loam_sdk::soroban_sdk::Val;
+use loam_sdk::soroban_sdk::{testutils::BytesN as _, vec, BytesN, Env, IntoVal};
 
-use crate::SimpleAccount;
-use crate::SimpleAccountClient;
+use crate::SorobanContract__;
+use crate::SorobanContract__Client;
 
 fn generate_keypair() -> Keypair {
     Keypair::generate(&mut thread_rng())
 }
 
-fn create_account_contract(e: &Env) -> SimpleAccountClient {
-    SimpleAccountClient::new(e, &e.register_contract(None, SimpleAccount {}))
+fn create_account_contract(e: &Env) -> SorobanContract__Client {
+    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
 }
 
-fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> RawVal {
+fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {
     let signature: BytesN<64> = signer
         .sign(payload.to_array().as_slice())
         .to_bytes()
@@ -30,7 +29,7 @@ fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> RawVal {
 
 #[test]
 fn test_account() {
-    let env: Env = Default::default();
+    let env = Env::default();
 
     let account_contract = create_account_contract(&env);
 
@@ -39,12 +38,12 @@ fn test_account() {
 
     let payload = BytesN::random(&env);
     // `__check_auth` can't be called directly, hence we need to use
-    // `invoke_account_contract_check_auth` testing utility that emulates being
+    // `try_invoke_contract_check_auth` testing utility that emulates being
     // called by the Soroban host during a `require_auth` call.
-    env.invoke_account_contract_check_auth::<Status>(
-        &account_contract.contract_id,
+    env.try_invoke_contract_check_auth::<Error>(
+        &account_contract.address,
         &payload,
-        &vec![&env, sign(&env, &signer, &payload)],
+        sign(&env, &signer, &payload),
         &vec![&env],
     )
     // Unwrap the result to make sure there is no error.
@@ -53,10 +52,10 @@ fn test_account() {
     // Now pass a random bytes array instead of the signature - this should
     // result in an error as this is not a valid signature.
     assert!(env
-        .invoke_account_contract_check_auth::<Status>(
-            &account_contract.contract_id,
+        .try_invoke_contract_check_auth::<Error>(
+            &account_contract.address,
             &payload,
-            &vec![&env, BytesN::<64>::random(&env).into()],
+            BytesN::<64>::random(&env).into(),
             &vec![&env],
         )
         .is_err());

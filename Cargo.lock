@@ -1225,8 +1225,10 @@ dependencies = [
 name = "example-simple-account"
 version = "0.0.0"
 dependencies = [
+ "ed25519-dalek 1.0.1",
  "loam-sdk",
  "loam-subcontract-core",
+ "rand 0.7.3",
 ]
 
 [[package]]
