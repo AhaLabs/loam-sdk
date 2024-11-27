@@ -1,6 +1,5 @@
 #![cfg(test)]
 extern crate std;
-use std::println;
 
 use crate::{token::example_token as token, SorobanContract__Client, SorobanContract__};
 
