@@ -193,7 +193,7 @@ impl Args {
         workspace_root: &std::path::Path,
     ) -> Result<bool, Error> {
         let result = cli::contract::fetch::Cmd {
-            contract_id: soroban_cli::config::ContractAddress::ContractId(contract_id.clone()),
+            contract_id: soroban_cli::config::ContractAddress::ContractId(*contract_id),
             out_file: None,
             locator: Self::get_config_locator(workspace_root),
             network: Self::get_network_args(network),
