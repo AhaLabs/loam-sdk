@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Bytes, BytesN, IntoKey, Lazy},
+    soroban_sdk::{self, contracttype, env, Address, Bytes, IntoKey, Lazy},
     subcontract,
 };
 
@@ -88,7 +88,7 @@ impl IsSingleOfferTrait for SingleOffer {
         buyer.require_auth();
 
         let sell_token_client = soroban_sdk::token::Client::new(&env(), &self.sell_token.clone());
-        let buy_token_client = soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&self.buy_token.clone().into()));
+        let buy_token_client = soroban_sdk::token::Client::new(&env(), &self.buy_token.clone());
 
         let sell_token_amount = buy_token_amount
             .checked_mul(self.sell_price as i128)
@@ -124,9 +124,9 @@ impl IsSingleOfferTrait for SingleOffer {
     // outstanding balance of the contract (in case if they mistakenly
     // transferred wrong token to it).
     // Must be authorized by seller.
-    fn withdraw(&self, token: BytesN<32>, amount: i128) {
+    fn withdraw(&self, token: Address, amount: i128) {
         self.seller.require_auth();
-        soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&token.into())).transfer(
+        soroban_sdk::token::Client::new(&env(), &token).transfer(
             &env().current_contract_address(),
             &self.seller,
             &amount,

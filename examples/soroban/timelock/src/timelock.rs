@@ -26,7 +26,7 @@ pub struct TimeBound {
 #[contracttype]
 #[derive(Clone)]
 pub struct ClaimableBalance {
-    pub token: BytesN<32>,
+    pub token: Address,
     pub amount: i128,
     pub claimants: Vec<Address>,
     pub time_bound: TimeBound,
@@ -42,7 +42,7 @@ impl Default for Timelock {
     fn default() -> Self {
         Self {
             balance: ClaimableBalance {
-                token: BytesN::from_array(&env(), &[0; 32]),
+                token: Address::from_string_bytes(&BytesN::from_array(&env(), &[0; 32]).into()),
                 amount: 0,
                 claimants: Vec::new(&env()),
                 time_bound: TimeBound {
@@ -70,7 +70,7 @@ pub trait IsTimelockTrait {
     fn deposit(
         &mut self,
         from: Address,
-        token: BytesN<32>,
+        token: Address,
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
@@ -82,7 +82,7 @@ impl IsTimelockTrait for Timelock {
     fn deposit(
         &mut self,
         from: Address,
-        token: BytesN<32>,
+        token: Address,
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
@@ -95,7 +95,7 @@ impl IsTimelockTrait for Timelock {
         }
         from.require_auth();
 
-        let token_client = soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&token.clone().into()));
+        let token_client = soroban_sdk::token::Client::new(&env(), &token.clone());
         token_client.transfer(&from, &env().current_contract_address(), &amount);
 
         self.balance = ClaimableBalance {
@@ -117,7 +117,7 @@ impl IsTimelockTrait for Timelock {
             panic!("claimant is not allowed to claim this balance");
         }
 
-        let token_client = soroban_sdk::token::Client::new(&env(), &Address::from_string_bytes(&self.balance.token.clone().into()));
+        let token_client = soroban_sdk::token::Client::new(&env(), &self.balance.token.clone());
         token_client.transfer(
             &env().current_contract_address(),
             &claimant,
