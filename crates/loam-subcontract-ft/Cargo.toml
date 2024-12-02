@@ -1,6 +1,6 @@
 [package]
 name = "loam-subcontract-ft"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2021"
 description = "A Subcontract for a fungible token"
 license = "Apache-2.0"
@@ -8,7 +8,7 @@ repository = "https://github.com/loambuild/loam/tree/main/crates/loam-subcontrac
 
 
 [dependencies]
-loam-sdk = { path = "../loam-sdk", version = "0.6.14", features = [
+loam-sdk = { path = "../loam-sdk", version = "0.6.15", features = [
     "loam-soroban-sdk",
 ] }
 

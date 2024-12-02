@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, path::Path};
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use soroban_sdk::xdr;
+use stellar_xdr::curr as xdr;
 use syn::{File, ItemTrait, TraitItemFn};
 
 /// Read a crate starting from a single file then parse into a file
@@ -128,35 +128,18 @@ pub fn parse_asset(str: &str) -> Result<xdr::Asset, xdr::Error> {
     let split: Vec<&str> = str.splitn(2, ':').collect();
     assert!(split.len() == 2, "invalid asset \"{str}\"");
     let code = split[0];
-    let issuer = split[1];
+    let issuer: xdr::AccountId = split[1].parse()?;
     let re = regex::Regex::new("^[[:alnum:]]{1,12}$").expect("regex failed");
     assert!(re.is_match(code), "invalid asset \"{str}\"");
-    if code.len() <= 4 {
-        let mut asset_code: [u8; 4] = [0; 4];
-        for (i, b) in code.as_bytes().iter().enumerate() {
-            asset_code[i] = *b;
+    let asset_code: xdr::AssetCode = code.parse()?;
+    Ok(match asset_code {
+        xdr::AssetCode::CreditAlphanum4(asset_code) => {
+            xdr::Asset::CreditAlphanum4(xdr::AlphaNum4 { asset_code, issuer })
         }
-        Ok(xdr::Asset::CreditAlphanum4(xdr::AlphaNum4 {
-            asset_code: xdr::AssetCode4(asset_code),
-            issuer: parse_account_id(issuer)?,
-        }))
-    } else {
-        let mut asset_code: [u8; 12] = [0; 12];
-        for (i, b) in code.as_bytes().iter().enumerate() {
-            asset_code[i] = *b;
+        xdr::AssetCode::CreditAlphanum12(asset_code) => {
+            xdr::Asset::CreditAlphanum12(xdr::AlphaNum12 { asset_code, issuer })
         }
-        Ok(xdr::Asset::CreditAlphanum12(xdr::AlphaNum12 {
-            asset_code: xdr::AssetCode12(asset_code),
-            issuer: parse_account_id(issuer)?,
-        }))
-    }
-}
-
-pub fn parse_account_id(str: &str) -> Result<xdr::AccountId, stellar_strkey::DecodeError> {
-    let pk_bytes = stellar_strkey::ed25519::PublicKey::from_string(str)?.0;
-    Ok(xdr::AccountId(xdr::PublicKey::PublicKeyTypeEd25519(
-        pk_bytes.into(),
-    )))
+    })
 }
 
 // Generate the code to read the STELLAR_NETWORK environment variable

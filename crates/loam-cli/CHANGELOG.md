@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.3](https://github.com/loambuild/loam/compare/loam-cli-v0.14.2...loam-cli-v0.14.3) - 2024-09-30
+
+### Fixed
+
+- use testutils if the target isn't Wasm ([#164](https://github.com/loambuild/loam/pull/164))
+
+## [0.14.2](https://github.com/loambuild/loam/compare/loam-cli-v0.14.1...loam-cli-v0.14.2) - 2024-09-24
+
+### Added
+
+- add `stellar_asset!` macro. Resolves a token client at compile ([#133](https://github.com/loambuild/loam/pull/133))
+
 ## [0.14.1](https://github.com/loambuild/loam/compare/loam-cli-v0.14.0...loam-cli-v0.14.1) - 2024-09-24
 
 ### Added

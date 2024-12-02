@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.15](https://github.com/loambuild/loam/compare/loam-soroban-sdk-v0.6.14...loam-soroban-sdk-v0.6.15) - 2024-09-24
+
+### Added
+
+- add `stellar_asset!` macro. Resolves a token client at compile ([#133](https://github.com/loambuild/loam/pull/133))
+
 ## [0.6.14](https://github.com/loambuild/loam/compare/loam-soroban-sdk-v0.6.13...loam-soroban-sdk-v0.6.14) - 2024-08-02
 
 ### Other

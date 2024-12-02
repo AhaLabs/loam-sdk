@@ -1,6 +1,6 @@
 [package]
 name = "loam-sdk-macro"
-version = "0.8.3"
+version = "0.8.5"
 edition = "2021"
 description = "Macros needed by loam-sdk"
 license = "Apache-2.0"
@@ -13,7 +13,7 @@ proc-macro = true
 [dependencies]
 loam-build = { path = "../loam-build", version = "0.7.3" }
 
-soroban-sdk = { workspace = true, features = ["testutils"] }
+stellar-xdr = { workspace = true, features = ["curr"] }
 stellar-strkey = { workspace = true }
 
 sha2 = { workspace = true }
