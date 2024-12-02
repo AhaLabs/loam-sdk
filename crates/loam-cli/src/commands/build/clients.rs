@@ -10,7 +10,7 @@ use soroban_cli::{commands as cli, CommandParser};
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::process::Command;
-use stellar_strkey;
+use stellar_strkey::{self, Contract};
 use stellar_xdr::curr::Error as xdrError;
 
 use super::env_toml::Network;
@@ -129,10 +129,12 @@ impl Args {
                 let soroban_cli::config::network::Network {
                     rpc_url,
                     network_passphrase,
+                    ..
                 } = (soroban_cli::config::network::Args {
                     network: Some(name.clone()),
                     rpc_url: None,
                     network_passphrase: None,
+                    rpc_headers: Vec::new(),
                 })
                 .get(&soroban_cli::config::locator::Args {
                     global: false,
@@ -162,6 +164,7 @@ impl Args {
             rpc_url: network.rpc_url.clone(),
             network_passphrase: network.network_passphrase.clone(),
             network: network.name.clone(),
+            rpc_headers: network.rpc_headers.clone().unwrap_or_default(),
         }
     }
 
@@ -175,7 +178,7 @@ impl Args {
     fn get_contract_alias(
         name: &str,
         workspace_root: &std::path::Path,
-    ) -> Result<Option<String>, soroban_cli::config::locator::Error> {
+    ) -> Result<Option<Contract>, soroban_cli::config::locator::Error> {
         let config_dir = Self::get_config_locator(workspace_root);
         let network_passphrase = std::env::var("STELLAR_NETWORK_PASSPHRASE")
             .expect("No STELLAR_NETWORK_PASSPHRASE environment variable set");
@@ -184,13 +187,13 @@ impl Args {
 
     async fn contract_hash_matches(
         &self,
-        contract_id: &str,
+        contract_id: &Contract,
         hash: &str,
         network: &Network,
         workspace_root: &std::path::Path,
     ) -> Result<bool, Error> {
         let result = cli::contract::fetch::Cmd {
-            contract_id: contract_id.to_string(),
+            contract_id: soroban_cli::config::ContractAddress::ContractId(contract_id.clone()),
             out_file: None,
             locator: Self::get_config_locator(workspace_root),
             network: Self::get_network_args(network),
@@ -215,7 +218,7 @@ impl Args {
 
     fn save_contract_alias(
         name: &str,
-        contract_id: &str,
+        contract_id: &Contract,
         network: &Network,
         workspace_root: &std::path::Path,
     ) -> Result<(), soroban_cli::config::locator::Error> {
@@ -318,7 +321,7 @@ export default new Client.Client({{
             } else {
                 eprintln!("🔐 creating keys for {:?}", account.name);
                 cli::keys::generate::Cmd::parse_arg_vec(&[&account.name])?
-                    .run()
+                    .run(&soroban_cli::commands::global::Args::default())
                     .await?;
             }
         }
@@ -367,7 +370,7 @@ export default new Client.Client({{
                 if stellar_strkey::Contract::from_string(id).is_err() {
                     return Err(Error::InvalidContractID(id.to_string()));
                 }
-                self.generate_contract_bindings(workspace_root, name, id)
+                self.generate_contract_bindings(workspace_root, name, &id.to_string())
                     .await?;
             } else {
                 return Err(Error::MissingContractID(name.to_string()));
@@ -423,7 +426,7 @@ export default new Client.Client({{
             };
             let contract_id = if let Some(id) = contract_id {
                 // If we have a contract ID, use it
-                id
+                Contract::from_string(&id).map_err(|_| Error::InvalidContractID(id.clone()))?
             } else {
                 // If we don't have a contract ID, proceed with installation and deployment
                 let wasm_path = workspace_root.join(format!("target/loam/{name}.wasm"));
@@ -489,7 +492,7 @@ export default new Client.Client({{
                     }
                 }
             }
-            self.generate_contract_bindings(workspace_root, &name, &contract_id)
+            self.generate_contract_bindings(workspace_root, &name, &contract_id.to_string())
                 .await?;
         }
 
@@ -533,7 +536,7 @@ export default new Client.Client({{
     async fn run_init_script(
         &self,
         name: &str,
-        contract_id: &str,
+        contract_id: &Contract,
         init_script: &str,
     ) -> Result<(), Error> {
         let re = Regex::new(r"\$\((.*?)\)").expect("Invalid regex pattern");
@@ -558,7 +561,8 @@ export default new Client.Client({{
                 .iter()
                 .partition(|&part| part.starts_with("STELLAR_ACCOUNT="));
 
-            let mut args = vec!["--id", contract_id];
+            let contract_id_arg = contract_id.to_string();
+            let mut args = vec!["--id", &contract_id_arg];
             if let Some(account) = source_account.first() {
                 let account = account.strip_prefix("STELLAR_ACCOUNT=").unwrap();
                 args.extend_from_slice(&["--source-account", account]);
