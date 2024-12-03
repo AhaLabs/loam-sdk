@@ -76,7 +76,7 @@ pub struct Network {
     pub name: Option<String>,
     pub rpc_url: Option<String>,
     pub network_passphrase: Option<String>,
-    // run_locally: Option<bool>,
+    pub run_locally: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
