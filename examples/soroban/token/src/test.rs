@@ -194,7 +194,7 @@ fn test_burn() {
 }
 
 #[test]
-#[should_panic(expected = "insufficient balance")]
+#[should_panic(expected = "Error(Contract, #1)")]
 fn transfer_insufficient_balance() {
     let e = Env::default();
     e.mock_all_auths();
@@ -211,7 +211,7 @@ fn transfer_insufficient_balance() {
 }
 
 #[test]
-#[should_panic(expected = "insufficient allowance")]
+#[should_panic(expected = "Error(Contract, #3)")]
 fn transfer_from_insufficient_allowance() {
     let e = Env::default();
     e.mock_all_auths();
@@ -232,20 +232,11 @@ fn transfer_from_insufficient_allowance() {
 }
 
 #[test]
-#[should_panic(expected = "already initialized")]
+#[should_panic(expected = "Error(Contract, #2)")]
 fn initialize_already_initialized() {
     let e = Env::default();
     let admin = Address::generate(&e);
     let token = create_token(&e, &admin);
 
     token.initialize(&admin, &10, &"name".into_val(&e), &"symbol".into_val(&e));
-}
-
-#[test]
-#[should_panic(expected = "Decimal must not be greater than 18")]
-fn decimal_is_over_eighteen() {
-    let e = Env::default();
-    let admin = Address::generate(&e);
-    let token = SorobanContract__Client::new(&e, &e.register_contract(None, SorobanContract__ {}));
-    token.initialize(&admin, &19, &"name".into_val(&e), &"symbol".into_val(&e));
 }

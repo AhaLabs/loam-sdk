@@ -1,9 +1,10 @@
 #![cfg(test)]
 
-use super::{DataKey, TtlContract, TtlContractClient};
-use soroban_sdk::testutils::storage::{Instance, Persistent, Temporary};
-use soroban_sdk::testutils::Ledger;
-use soroban_sdk::Env;
+use super::subcontract::DataKey; 
+use crate::{SorobanContract__, SorobanContract__Client};
+use loam_sdk::soroban_sdk::testutils::storage::{Instance, Persistent, Temporary};
+use loam_sdk::soroban_sdk::testutils::Ledger;
+use loam_sdk::soroban_sdk::Env;
 
 extern crate std;
 
@@ -37,8 +38,8 @@ fn create_env() -> Env {
 #[test]
 fn test_extend_ttl_behavior() {
     let env = create_env();
-    let contract_id = env.register_contract(None, TtlContract);
-    let client = TtlContractClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, SorobanContract__);
+    let client = SorobanContract__Client::new(&env, &contract_id);
 
     // Create initial entries and make sure their TTLs correspond to
     // `min_persistent_entry_ttl` and `min_temp_entry_ttl` values set in
@@ -111,8 +112,8 @@ fn test_extend_ttl_behavior() {
 #[test]
 fn test_temp_entry_removal() {
     let env = create_env();
-    let contract_id = env.register_contract(None, TtlContract);
-    let client = TtlContractClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, SorobanContract__);
+    let client = SorobanContract__Client::new(&env, &contract_id);
     client.setup();
     // Extend the contract instance to live more than 7001 ledgers.
     client.extend_instance();
@@ -137,8 +138,8 @@ fn test_temp_entry_removal() {
 #[should_panic(expected = "[testing-only] Accessed contract instance key that has been archived.")]
 fn test_persistent_entry_archival() {
     let env = create_env();
-    let contract_id = env.register_contract(None, TtlContract);
-    let client = TtlContractClient::new(&env, &contract_id);
+    let contract_id = env.register_contract(None, SorobanContract__);
+    let client = SorobanContract__Client::new(&env, &contract_id);
     client.setup();
     // Extend the instance TTL to 10000 ledgers.
     client.extend_instance();

@@ -5,9 +5,11 @@ use loam_sdk::{
 
 use crate::error::Error;
 
-fn check_nonnegative_amount(amount: i128) {
+fn check_nonnegative_amount(amount: i128) -> Result<(), Error> {
     if amount < 0 {
-        panic!("negative amount is not allowed: {}", amount)
+        Err(Error::InsufficientBalance)
+    } else {
+        Ok(())
     }
 }
 
@@ -81,30 +83,31 @@ impl Default for Token {
 
 #[subcontract]
 pub trait IsTokenTrait {
-    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes);
+    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes) -> Result<(), Error>;
     fn allowance(&self, from: Address, spender: Address) -> i128;
     fn balance(&self, id: Address) -> i128;
-    fn transfer(&mut self, from: Address, to: Address, amount: i128);
-    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128);
-    fn burn(&mut self, from: Address, amount: i128);
-    fn burn_from(&mut self, spender: Address, from: Address, amount: i128);
+    fn transfer(&mut self, from: Address, to: Address, amount: i128) -> Result<(), Error>;
+    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) -> Result<(), Error>;
+    fn burn(&mut self, from: Address, amount: i128) -> Result<(), Error>;
+    fn burn_from(&mut self, spender: Address, from: Address, amount: i128) -> Result<(), Error>;
     fn mint(&mut self, to: Address, amount: i128);
     fn set_admin(&mut self, new_admin: Address);
     fn decimals(&self) -> u32;
     fn name(&self) -> Bytes;
     fn symbol(&self) -> Bytes;
-    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32);
+    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32) -> Result<(), Error>;
 }
 
 impl IsTokenTrait for Token {
-    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes) {
+    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes) -> Result<(), Error> {
         if self.admin != env().current_contract_address() {
-            panic!("already initialized");
+            return Err(Error::AlreadyInitialized);
         }
         self.admin = admin;
         self.decimal = decimal;
         self.name = name;
         self.symbol = symbol;
+        Ok(())
     }
 
     fn allowance(&self, from: Address, spender: Address) -> i128 {
@@ -120,63 +123,65 @@ impl IsTokenTrait for Token {
         self.balances.get(id).unwrap_or(0)
     }
 
-    fn transfer(&mut self, from: Address, to: Address, amount: i128) {
+    fn transfer(&mut self, from: Address, to: Address, amount: i128) -> Result<(), Error> {
         from.require_auth();
         let from_balance = self.balance(from.clone());
         let to_balance = self.balance(to.clone());
         if from_balance < amount {
-            panic_with_error!(env(), Error::InsufficientBalance);
+            return Err(Error::InsufficientBalance);
         }
         self.balances.set(from, from_balance - amount);
         self.balances.set(to, to_balance + amount);
+        Ok(())
     }
 
-    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) {
+    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) -> Result<(), Error> {
         spender.require_auth();
 
-        check_nonnegative_amount(amount);
+        check_nonnegative_amount(amount)?;
 
         env().storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        spend_allowance(env(), from.clone(), spender, amount);
+        spend_allowance(env(), from.clone(), spender, amount)?;
         let from_balance = self.balance(from.clone());
         let to_balance = self.balance(to.clone());
         if from_balance < amount {
-            panic!("insufficient balance");
+            return Err(Error::InsufficientBalance);
         }
         self.balances.set(from, from_balance - amount);
         self.balances.set(to, to_balance + amount);
+        Ok(())
     }
 
-    fn burn(&mut self, from: Address, amount: i128) {
+    fn burn(&mut self, from: Address, amount: i128) -> Result<(), Error> {
         from.require_auth();
         let balance = self.balance(from.clone());
         if balance < amount {
-            panic!("insufficient balance");
+            return Err(Error::InsufficientBalance);
         }
         self.balances.set(from, balance - amount);
+        Ok(())
     }
 
-    fn burn_from(&mut self, spender: Address, from: Address, amount: i128) {
+    fn burn_from(&mut self, spender: Address, from: Address, amount: i128) -> Result<(), Error> {
         spender.require_auth();
 
-        check_nonnegative_amount(amount);
+        check_nonnegative_amount(amount)?;
 
         env().storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
-        spend_allowance(env(), from.clone(), spender, amount);
+        spend_allowance(env(), from.clone(), spender, amount)?;
         let balance = self.balance(from.clone());
         if balance < amount {
-            panic!("insufficient balance");
+            return Err(Error::InsufficientBalance);
         }
         self.balances.set(from, balance - amount);
+        Ok(())
     }
-
-
 
     fn mint(&mut self, to: Address, amount: i128) {
         self.admin.require_auth();
@@ -201,15 +206,16 @@ impl IsTokenTrait for Token {
         self.symbol.clone()
     }
 
-    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32) {
+    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32) -> Result<(), Error> {
         from.require_auth();
 
-        check_nonnegative_amount(amount);
+        check_nonnegative_amount(amount)?;
 
         env().storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
-        write_allowance(env(), from, spender, amount, expiration_ledger);
+        write_allowance(env(), from, spender, amount, expiration_ledger)?;
+        Ok(())
     }
 }
 
@@ -220,14 +226,14 @@ pub fn write_allowance(
     spender: Address,
     amount: i128,
     expiration_ledger: u32,
-) {
+) -> Result<(), Error> {
     let allowance = AllowanceValue {
         amount,
         expiration_ledger,
     };
 
     if amount > 0 && expiration_ledger < e.ledger().sequence() {
-        panic!("expiration_ledger is less than ledger seq when amount > 0")
+        return Err(Error::ExpirationInPast);
     }
 
     let key = DataKey::Allowance(AllowanceDataKey { from, spender });
@@ -236,16 +242,17 @@ pub fn write_allowance(
     if amount > 0 {
         let live_for = expiration_ledger
             .checked_sub(e.ledger().sequence())
-            .unwrap();
+            .ok_or(Error::ExpirationOverflow)?;
 
         e.storage().temporary().extend_ttl(&key, live_for, live_for)
     }
+    Ok(())
 }
 
-pub fn spend_allowance(e: &Env, from: Address, spender: Address, amount: i128) {
+pub fn spend_allowance(e: &Env, from: Address, spender: Address, amount: i128) -> Result<(), Error> {
     let allowance = read_allowance(e, from.clone(), spender.clone());
     if allowance.amount < amount {
-        panic!("insufficient allowance");
+        return Err(Error::InsufficientAllowance);
     }
     if amount > 0 {
         write_allowance(
@@ -254,7 +261,7 @@ pub fn spend_allowance(e: &Env, from: Address, spender: Address, amount: i128) {
             spender,
             allowance.amount - amount,
             allowance.expiration_ledger,
-        );
+        )?;
     }
+    Ok(())
 }
-

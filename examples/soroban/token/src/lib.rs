@@ -6,6 +6,7 @@ use loam_subcontract_core::{admin::Admin, Core};
 mod token;
 mod error;
 pub use token::*;
+use crate::error::Error;
 
 #[derive_contract(Core(Admin), TokenTrait(Token))]
 pub struct Contract;
