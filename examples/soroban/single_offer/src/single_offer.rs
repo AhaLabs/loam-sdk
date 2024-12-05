@@ -3,6 +3,8 @@ use loam_sdk::{
     subcontract,
 };
 
+use crate::error::SingleOfferError;
+
 /*
 How this contract should be used:
 
@@ -24,12 +26,13 @@ pub struct SingleOffer {
     buy_price: u32,
 }
 
+
 impl Default for SingleOffer {
     fn default() -> Self {
         Self {
-            seller: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
-            sell_token: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
-            buy_token: Address::from_string_bytes(&Bytes::from_array(env(), &[0; 32])),
+            seller: env().current_contract_address(),
+            sell_token: env().current_contract_address(),
+            buy_token: env().current_contract_address(),
             sell_price: 0,
             buy_price: 0,
         }
@@ -38,8 +41,6 @@ impl Default for SingleOffer {
 
 #[subcontract]
 pub trait IsSingleOfferTrait {
-    // Creates the offer for seller for the given token pair and initial price.
-    // See comment above the `Offer` struct for information on pricing.
     fn create(
         &mut self,
         seller: Address,
@@ -47,12 +48,13 @@ pub trait IsSingleOfferTrait {
         buy_token: Address,
         sell_price: u32,
         buy_price: u32,
-    );
-    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128);
-    fn withdraw(&self, token: Address, amount: i128);
-    fn updt_price(&mut self, sell_price: u32, buy_price: u32);
+    ) -> Result<(), SingleOfferError>;
+    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) -> Result<(), SingleOfferError>;
+    fn withdraw(&self, token: Address, amount: i128) -> Result<(), SingleOfferError>;
+    fn updt_price(&mut self, sell_price: u32, buy_price: u32) -> Result<(), SingleOfferError>;
     fn get_offer(&self) -> SingleOffer;
 }
+
 
 impl IsSingleOfferTrait for SingleOffer {
     fn create(
@@ -62,12 +64,12 @@ impl IsSingleOfferTrait for SingleOffer {
         buy_token: Address,
         sell_price: u32,
         buy_price: u32,
-    ) {
+    ) -> Result<(), SingleOfferError> {
         if self.sell_price != 0 || self.buy_price != 0 {
-            panic!("offer is already created");
+            return Err(SingleOfferError::OfferAlreadyCreated);
         }
         if buy_price == 0 || sell_price == 0 {
-            panic!("zero price is not allowed");
+            return Err(SingleOfferError::ZeroPriceNotAllowed);
         }
         seller.require_auth();
         
@@ -76,6 +78,7 @@ impl IsSingleOfferTrait for SingleOffer {
         self.buy_token = buy_token;
         self.sell_price = sell_price;
         self.buy_price = buy_price;
+        Ok(())
     }
 
     // Trades `buy_token_amount` of buy_token from buyer for `sell_token` amount
@@ -84,9 +87,11 @@ impl IsSingleOfferTrait for SingleOffer {
     // accept.
     // Buyer needs to authorize the `trade` call and internal `transfer` call to
     // the contract address.
-    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) {
+    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) -> Result<(), SingleOfferError> {
+        // Buyer needs to authorize the trade.
         buyer.require_auth();
 
+        // prepare the token clients to do the trade.
         let sell_token_client = soroban_sdk::token::Client::new(&env(), &self.sell_token.clone());
         let buy_token_client = soroban_sdk::token::Client::new(&env(), &self.buy_token.clone());
 
@@ -96,8 +101,9 @@ impl IsSingleOfferTrait for SingleOffer {
             / self.buy_price as i128;
 
         if sell_token_amount < min_sell_token_amount {
-            panic!("price is too low");
+            return Err(SingleOfferError::PriceTooLow);
         }
+
 
         let contract = env().current_contract_address();
 
@@ -117,32 +123,30 @@ impl IsSingleOfferTrait for SingleOffer {
         sell_token_client.transfer(&contract, &buyer, &sell_token_amount);
         // Transfer the `buy_token` to the seller immediately.
         buy_token_client.transfer(&contract, &self.seller, &buy_token_amount);
+
+        Ok(())
     }
 
-    // Sends amount of token from this contract to the seller.
-    // This is intentionally flexible so that the seller can withdraw any
-    // outstanding balance of the contract (in case if they mistakenly
-    // transferred wrong token to it).
-    // Must be authorized by seller.
-    fn withdraw(&self, token: Address, amount: i128) {
+    fn withdraw(&self, token: Address, amount: i128) -> Result<(), SingleOfferError> {
         self.seller.require_auth();
         soroban_sdk::token::Client::new(&env(), &token).transfer(
             &env().current_contract_address(),
             &self.seller,
             &amount,
         );
+        Ok(())
     }
 
-    fn updt_price(&mut self, sell_price: u32, buy_price: u32) {
+    fn updt_price(&mut self, sell_price: u32, buy_price: u32) -> Result<(), SingleOfferError> {
         if buy_price == 0 || sell_price == 0 {
-            panic!("zero price is not allowed");
+            return Err(SingleOfferError::ZeroPriceNotAllowed);
         }
         self.seller.require_auth();
         self.sell_price = sell_price;
         self.buy_price = buy_price;
+        Ok(())
     }
 
-    // Returns the current state of the offer.
     fn get_offer(&self) -> SingleOffer {
         self.clone()
     }

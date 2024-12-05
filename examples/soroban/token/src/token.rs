@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Bytes, Env, IntoKey, Lazy, Map, Symbol},
+    soroban_sdk::{self, contracttype, env, Address, Bytes, Env, IntoKey, Lazy, Map},
     subcontract,
 };
 
@@ -107,6 +107,7 @@ impl IsTokenTrait for Token {
         self.decimal = decimal;
         self.name = name;
         self.symbol = symbol;
+        self.balances = Map::new(env());
         Ok(())
     }
 

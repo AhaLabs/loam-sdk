@@ -146,7 +146,7 @@ fn test_deposit_and_claim() {
 }
 
 #[test]
-#[should_panic(expected = "contract has been already initialized")]
+#[should_panic(expected = "Error(Contract, #2)")]
 fn test_double_deposit_not_possible() {
     let test = ClaimableBalanceTest::setup();
     test.contract.deposit(
@@ -172,7 +172,7 @@ fn test_double_deposit_not_possible() {
 }
 
 #[test]
-#[should_panic(expected = "claimant is not allowed to claim this balance")]
+#[should_panic(expected = "Error(Contract, #4)")]
 fn test_unauthorized_claim_not_possible() {
     let test = ClaimableBalanceTest::setup();
     test.contract.deposit(
@@ -194,7 +194,7 @@ fn test_unauthorized_claim_not_possible() {
 }
 
 #[test]
-#[should_panic(expected = "time predicate is not fulfilled")]
+#[should_panic(expected = "Error(Contract, #3)")]
 fn test_out_of_time_bound_claim_not_possible() {
     let test = ClaimableBalanceTest::setup();
     test.contract.deposit(
@@ -212,7 +212,7 @@ fn test_out_of_time_bound_claim_not_possible() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "Error(Contract, #5)")]
 fn test_double_claim_not_possible() {
     let test = ClaimableBalanceTest::setup();
     test.contract.deposit(
@@ -232,7 +232,7 @@ fn test_double_claim_not_possible() {
 }
 
 #[test]
-#[should_panic(expected = "contract has been already initialized")]
+#[should_panic(expected = "Error(Contract, #2)")]
 fn test_deposit_after_claim_not_possible() {
     let test = ClaimableBalanceTest::setup();
     test.contract.deposit(

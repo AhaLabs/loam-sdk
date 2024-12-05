@@ -9,6 +9,8 @@ use loam_sdk::{
     subcontract,
 };
 
+use crate::error::TimelockError;
+
 #[contracttype]
 #[derive(Clone)]
 pub enum TimeBoundKind {
@@ -42,7 +44,7 @@ impl Default for Timelock {
     fn default() -> Self {
         Self {
             balance: ClaimableBalance {
-                token: Address::from_string_bytes(&BytesN::from_array(&env(), &[0; 32]).into()),
+                token: env().current_contract_address(),
                 amount: 0,
                 claimants: Vec::new(&env()),
                 time_bound: TimeBound {
@@ -64,7 +66,6 @@ fn check_time_bound(env: &Env, time_bound: &TimeBound) -> bool {
         TimeBoundKind::After => ledger_timestamp >= time_bound.timestamp,
     }
 }
-
 #[subcontract]
 pub trait IsTimelockTrait {
     fn deposit(
@@ -74,8 +75,8 @@ pub trait IsTimelockTrait {
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
-    );
-    fn claim(&mut self, claimant: Address);
+    ) -> Result<(), TimelockError>;
+    fn claim(&mut self, claimant: Address) -> Result<(), TimelockError>;
 }
 
 impl IsTimelockTrait for Timelock {
@@ -86,12 +87,12 @@ impl IsTimelockTrait for Timelock {
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
-    ) {
+    ) -> Result<(), TimelockError> {
         if claimants.len() > 10 {
-            panic!("too many claimants");
+            return Err(TimelockError::TooManyClaimants);
         }
-        if self.balance.amount != 0 {
-            panic!("contract has been already initialized");
+        if self.balance.claimants.len() != 0 {
+            return Err(TimelockError::AlreadyInitialized);
         }
         from.require_auth();
 
@@ -104,17 +105,22 @@ impl IsTimelockTrait for Timelock {
             time_bound,
             claimants,
         };
+        Ok(())
     }
 
-    fn claim(&mut self, claimant: Address) {
+    fn claim(&mut self, claimant: Address) -> Result<(), TimelockError> {
         claimant.require_auth();
 
+        if self.balance.amount == 0 {
+            return Err(TimelockError::BalanceAlreadyClaimed);
+        }
+
         if !check_time_bound(&env(), &self.balance.time_bound) {
-            panic!("time predicate is not fulfilled");
+            return Err(TimelockError::TimePredicateNotFulfilled);
         }
 
         if !self.balance.claimants.contains(&claimant) {
-            panic!("claimant is not allowed to claim this balance");
+            return Err(TimelockError::ClaimantNotAllowed);
         }
 
         let token_client = soroban_sdk::token::Client::new(&env(), &self.balance.token.clone());
@@ -125,5 +131,6 @@ impl IsTimelockTrait for Timelock {
         );
 
         self.balance.amount = 0;
+        Ok(())
     }
 }

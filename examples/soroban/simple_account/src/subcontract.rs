@@ -31,7 +31,7 @@ pub trait IsSimpleAccount {
 
 impl IsSimpleAccount for SimpleAccountManager {
     fn init(&mut self, public_key: BytesN<32>) -> Result<(), SimpleAccError> {
-        if !self.owner.is_empty() {
+        if !(self.owner ==  BytesN::from_array(env(),&[0; 32])){
             return Err(SimpleAccError::OwnerAlreadySet);
         }
         self.owner = public_key;
