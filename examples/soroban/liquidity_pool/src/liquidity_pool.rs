@@ -1,7 +1,7 @@
 use core::ops::Add;
 
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, Lazy, String},
+    soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy, Symbol},
     subcontract,
 };
 use crate::{error::Error, token::example_token as token};
@@ -48,6 +48,12 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         }
 
         let share_contract_id = crate::token::create_contract(env(), &token_wasm_hash, &token_a, &token_b);
+        token::Client::new(env(), &share_contract_id).initialize(
+            &env().current_contract_address(),
+            &7u32,
+            &"Pool Share Token".into_val(env()),
+            &"POOL".into_val(env()),
+        );
         self.token_a = token_a;
         self.token_b = token_b;
         self.token_share = share_contract_id;

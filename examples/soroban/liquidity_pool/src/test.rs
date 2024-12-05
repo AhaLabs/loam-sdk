@@ -4,12 +4,12 @@ extern crate std;
 use crate::{token::example_token as token, SorobanContract__Client, SorobanContract__};
 
 use loam_sdk::import_contract;
-use loam_sdk::soroban_sdk::{self, symbol_short, testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation}, Address, BytesN, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::{self, symbol_short, testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation}, Address, BytesN, Env, IntoVal};
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> token::Client<'a> {
     token::Client::new(
         e,
-        &e.register_stellar_asset_contract(admin.clone())
+        &e.register_stellar_asset_contract(admin.clone()),
     )
 }
 
@@ -60,7 +60,7 @@ fn test() {
     assert_eq!(token2.balance(&user1), 1000);
 
     liqpool.deposit(&user1, &100, &100, &100, &100);
-    /*assert_eq!(
+    assert_eq!(
         e.auths(),
         std::vec![(
             user1.clone(),
@@ -157,7 +157,7 @@ fn test() {
     assert_eq!(token_share.balance(&user1), 0);
     assert_eq!(token1.balance(&liqpool.address), 0);
     assert_eq!(token2.balance(&liqpool.address), 0);
-    assert_eq!(token_share.balance(&liqpool.address), 0);*/
+    assert_eq!(token_share.balance(&liqpool.address), 0);
 }
 
 #[test]

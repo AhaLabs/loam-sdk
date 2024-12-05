@@ -1,7 +1,7 @@
 #![no_std]
 
 use loam_sdk::derive_contract;
-use loam_sdk::soroban_sdk::{Address, BytesN};
+use loam_sdk::soroban_sdk::Address;
 use loam_subcontract_core::{admin::Admin, Core};
 
 mod single_offer;

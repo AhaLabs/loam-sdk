@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, panic_with_error, Address, Bytes, Env, IntoKey, Lazy, Map},
+    soroban_sdk::{self, contracttype, env, Address, Bytes, Env, IntoKey, Lazy, Map, Symbol},
     subcontract,
 };
 
@@ -116,8 +116,6 @@ impl IsTokenTrait for Token {
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
         read_allowance(env(), from, spender).amount
     }
-
-
 
     fn balance(&self, id: Address) -> i128 {
         self.balances.get(id).unwrap_or(0)
