@@ -4,10 +4,7 @@ extern crate std;
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
 use loam_sdk::soroban_sdk::symbol_short;
-use loam_sdk::soroban_sdk::xdr::FromXdr;
-use loam_sdk::soroban_sdk::xdr::ToXdr;
 use loam_sdk::soroban_sdk::Address;
-use loam_sdk::soroban_sdk::FromVal;
 use loam_sdk::soroban_sdk::Val;
 use rand::thread_rng;
 //use loam_sdk::soroban_sdk::testutils::aut^i

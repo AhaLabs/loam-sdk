@@ -281,7 +281,7 @@ pub fn write_allowance(
             .checked_sub(e.ledger().sequence())
             .ok_or(Error::ExpirationOverflow)?;
 
-        e.storage().temporary().extend_ttl(&key, live_for, live_for)
+        e.storage().temporary().extend_ttl(&key, live_for, live_for);
     }
     Ok(())
 }

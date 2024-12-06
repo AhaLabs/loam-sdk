@@ -163,10 +163,8 @@ fn verify_authorization_policy(
 ) -> Result<(), AccError> {
     let contract_context = match context {
         Context::Contract(c) => {
-            if &c.contract == curr_contract {
-                if !all_signed {
-                    return Err(AccError::NotEnoughSigners);
-                }
+            if &c.contract == curr_contract && !all_signed {
+                return Err(AccError::NotEnoughSigners);
             }
             c
         }
@@ -184,11 +182,7 @@ fn verify_authorization_policy(
     let spend_left: Option<i128> =
         if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
             Some(spend_left)
-        } else if let Some(limit_left) = limits.get(contract_context.contract.clone()) {
-            Some(limit_left)
-        } else {
-            None
-        };
+        } else { limits.get(contract_context.contract.clone()) };
 
     // 'None' means that the contract is outside of the policy.
     if let Some(spend_left) = spend_left {

@@ -58,7 +58,7 @@ impl TestEnv {
     }
 
     fn find_project_root(start_path: &Path) -> Option<PathBuf> {
-        let mut current = start_path.clone();
+        let mut current = start_path;
         while let Some(parent) = current.parent() {
             if parent.join("Cargo.toml").exists() {
                 return Some(parent.to_path_buf());

@@ -1,6 +1,6 @@
 // src/subcontract.rs
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, BytesN, Lazy, Vec},
+    soroban_sdk::{self, contracttype, env, Address, Lazy, Vec},
     subcontract,
 };
 

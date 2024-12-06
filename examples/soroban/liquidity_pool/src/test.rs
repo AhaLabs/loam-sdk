@@ -40,7 +40,7 @@ fn test() {
 
     let mut token1 = create_token_contract(&e, &admin1);
     let mut token2 = create_token_contract(&e, &admin2);
-    if &token2.address < &token1.address {
+    if token2.address < token1.address {
         std::mem::swap(&mut token1, &mut token2);
         std::mem::swap(&mut admin1, &mut admin2);
     }
@@ -173,7 +173,7 @@ fn deposit_amount_zero_should_panic() {
 
     let mut token_a = create_token_contract(&e, &admin1);
     let mut token_b = create_token_contract(&e, &admin2);
-    if &token_b.address < &token_a.address {
+    if token_b.address < token_a.address {
         std::mem::swap(&mut token_a, &mut token_b);
         std::mem::swap(&mut admin1, &mut admin2);
     }
@@ -208,7 +208,7 @@ fn swap_reserve_one_nonzero_other_zero() {
 
     let mut token_a = create_token_contract(&e, &admin1);
     let mut token_b = create_token_contract(&e, &admin2);
-    if &token_b.address < &token_a.address {
+    if token_b.address < token_a.address {
         std::mem::swap(&mut token_a, &mut token_b);
         std::mem::swap(&mut admin1, &mut admin2);
     }

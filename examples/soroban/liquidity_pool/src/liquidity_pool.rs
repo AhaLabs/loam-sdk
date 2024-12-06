@@ -1,6 +1,6 @@
 use crate::{error::Error, token::example_token as token};
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy, Symbol},
+    soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy},
     subcontract,
 };
 use num_integer::Roots;

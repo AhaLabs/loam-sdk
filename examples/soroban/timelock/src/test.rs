@@ -30,7 +30,7 @@ struct ClaimableBalanceTest<'a> {
     contract: SorobanContract__Client<'a>,
 }
 
-impl<'a> ClaimableBalanceTest<'a> {
+impl ClaimableBalanceTest<'_> {
     fn setup() -> Self {
         let env = Env::default();
         env.mock_all_auths();

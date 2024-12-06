@@ -125,7 +125,7 @@ fn test_temp_entry_removal() {
     });
     // Now the entry is no longer present in the environment.
     env.as_contract(&contract_id, || {
-        assert_eq!(env.storage().temporary().has(&DataKey::MyKey), false);
+        assert!(!env.storage().temporary().has(&DataKey::MyKey));
     });
 }
 

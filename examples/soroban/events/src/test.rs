@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use loam_sdk::soroban_sdk::{self, testutils::Events, vec, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::{testutils::Events, vec, Env, IntoVal, Symbol};
 
 #[test]
 fn test() {

@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Bytes, IntoKey, Lazy},
+    soroban_sdk::{self, contracttype, env, Address, IntoKey, Lazy},
     subcontract,
 };
 
@@ -100,13 +100,13 @@ impl IsSingleOfferTrait for SingleOffer {
         buyer.require_auth();
 
         // prepare the token clients to do the trade.
-        let sell_token_client = soroban_sdk::token::Client::new(&env(), &self.sell_token.clone());
-        let buy_token_client = soroban_sdk::token::Client::new(&env(), &self.buy_token.clone());
+        let sell_token_client = soroban_sdk::token::Client::new(env(), &self.sell_token.clone());
+        let buy_token_client = soroban_sdk::token::Client::new(env(), &self.buy_token.clone());
 
         let sell_token_amount = buy_token_amount
-            .checked_mul(self.sell_price as i128)
+            .checked_mul(i128::from(self.sell_price))
             .unwrap()
-            / self.buy_price as i128;
+            / i128::from(self.buy_price);
 
         if sell_token_amount < min_sell_token_amount {
             return Err(SingleOfferError::PriceTooLow);
@@ -136,7 +136,7 @@ impl IsSingleOfferTrait for SingleOffer {
 
     fn withdraw(&self, token: Address, amount: i128) -> Result<(), SingleOfferError> {
         self.seller.require_auth();
-        soroban_sdk::token::Client::new(&env(), &token).transfer(
+        soroban_sdk::token::Client::new(env(), &token).transfer(
             &env().current_contract_address(),
             &self.seller,
             &amount,

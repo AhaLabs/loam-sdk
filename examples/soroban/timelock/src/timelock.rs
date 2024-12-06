@@ -1,11 +1,11 @@
 //! This contract demonstrates 'timelock' concept and implements a
 //! greatly simplified Claimable Balance (similar to
-//! https://developers.stellar.org/docs/glossary/claimable-balance).
+//! <https://developers.stellar.org/docs/glossary/claimable-balance>).
 //! The contract allows to deposit some amount of token and allow another
 //! account(s) claim it before or after provided time point.
 //! For simplicity, the contract only supports invoker-based auth.
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, BytesN, Env, IntoKey, Lazy, Vec},
+    soroban_sdk::{self, contracttype, env, Address, Env, IntoKey, Lazy, Vec},
     subcontract,
 };
 
@@ -46,7 +46,7 @@ impl Default for Timelock {
             balance: ClaimableBalance {
                 token: env().current_contract_address(),
                 amount: 0,
-                claimants: Vec::new(&env()),
+                claimants: Vec::new(env()),
                 time_bound: TimeBound {
                     kind: TimeBoundKind::Before,
                     timestamp: 0,
@@ -91,20 +91,15 @@ impl IsTimelockTrait for Timelock {
         if claimants.len() > 10 {
             return Err(TimelockError::TooManyClaimants);
         }
-        if self.balance.claimants.len() != 0 {
+        if !self.balance.claimants.is_empty() {
             return Err(TimelockError::AlreadyInitialized);
         }
         from.require_auth();
 
-        let token_client = soroban_sdk::token::Client::new(&env(), &token.clone());
+        let token_client = soroban_sdk::token::Client::new(env(), &token.clone());
         token_client.transfer(&from, &env().current_contract_address(), &amount);
 
-        self.balance = ClaimableBalance {
-            token,
-            amount,
-            time_bound,
-            claimants,
-        };
+        self.balance = ClaimableBalance { token, amount, claimants, time_bound };
         Ok(())
     }
 
@@ -115,7 +110,7 @@ impl IsTimelockTrait for Timelock {
             return Err(TimelockError::BalanceAlreadyClaimed);
         }
 
-        if !check_time_bound(&env(), &self.balance.time_bound) {
+        if !check_time_bound(env(), &self.balance.time_bound) {
             return Err(TimelockError::TimePredicateNotFulfilled);
         }
 
@@ -123,7 +118,7 @@ impl IsTimelockTrait for Timelock {
             return Err(TimelockError::ClaimantNotAllowed);
         }
 
-        let token_client = soroban_sdk::token::Client::new(&env(), &self.balance.token.clone());
+        let token_client = soroban_sdk::token::Client::new(env(), &self.balance.token.clone());
         token_client.transfer(
             &env().current_contract_address(),
             &claimant,

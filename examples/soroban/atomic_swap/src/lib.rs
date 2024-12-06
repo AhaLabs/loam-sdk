@@ -3,7 +3,7 @@
 //! off-chain.
 //! This example demonstrates how multi-party authorization can be implemented.
 #![no_std]
-use loam_sdk::soroban_sdk::{Address, BytesN};
+use loam_sdk::soroban_sdk::Address;
 use loam_subcontract_core::{admin::Admin, Core};
 
 pub mod error;
