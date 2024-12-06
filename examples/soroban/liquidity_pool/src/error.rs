@@ -10,4 +10,6 @@ pub enum Error {
     MinimumNotSatisfied = 4,
     InsufficientBAmount = 5,
     InvalidAAmount = 6,
+    DepositAmountsMustBePositive = 7,
+    NewReservesMustBePositive = 8,
 }

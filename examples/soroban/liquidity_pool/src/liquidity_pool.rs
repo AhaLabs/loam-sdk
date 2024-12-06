@@ -1,5 +1,3 @@
-use core::ops::Add;
-
 use crate::{error::Error, token::example_token as token};
 use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy, Symbol},
@@ -108,6 +106,9 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         let amounts =
             get_deposit_amounts(desired_a, min_a, desired_b, min_b, reserve_a, reserve_b)?;
 
+        if amounts.0 <= 0 || amounts.1 <= 0 {
+            return Err(Error::DepositAmountsMustBePositive);
+        }
         let token_a_client = token::Client::new(env(), &self.token_a);
         let token_b_client = token::Client::new(env(), &self.token_b);
 
@@ -211,8 +212,16 @@ impl IsLiquidityPoolTrait for LiquidityPool {
             );
         }
 
-        self.reserve_a = balance_a - out_a;
-        self.reserve_b = balance_b - out_b;
+        let new_reserve_a = balance_a - out_a;
+        let new_reserve_b = balance_b - out_b;
+
+        if new_reserve_a <= 0 || new_reserve_b <= 0 {
+            return Err(Error::NewReservesMustBePositive)
+        }
+
+        self.reserve_a = new_reserve_a;
+        self.reserve_b = new_reserve_b;
+
         Ok(())
     }
 
