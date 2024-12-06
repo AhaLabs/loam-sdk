@@ -3,10 +3,10 @@ extern crate std;
 
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
-use rand::thread_rng;
 use loam_sdk::soroban_sdk::Error;
 use loam_sdk::soroban_sdk::Val;
 use loam_sdk::soroban_sdk::{testutils::BytesN as _, vec, BytesN, Env, IntoVal};
+use rand::thread_rng;
 
 use crate::SorobanContract__;
 use crate::SorobanContract__Client;
@@ -52,11 +52,11 @@ fn test_account() {
     // Now pass a random bytes array instead of the signature - this should
     // result in an error as this is not a valid signature.
     /*assert!(env
-        .try_invoke_contract_check_auth::<Error>(
-            &account_contract.address,
-            &payload,
-            BytesN::<64>::random(&env).into(),
-            &vec![&env],
-        )
-        .is_err());*/
+    .try_invoke_contract_check_auth::<Error>(
+        &account_contract.address,
+        &payload,
+        BytesN::<64>::random(&env).into(),
+        &vec![&env],
+    )
+    .is_err());*/
 }

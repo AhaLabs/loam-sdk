@@ -1,6 +1,9 @@
 use loam_sdk::{
-    soroban_sdk::{self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map, Symbol, TryIntoVal, Vec},
-    subcontract, IntoKey
+    soroban_sdk::{
+        self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map,
+        Symbol, TryIntoVal, Vec,
+    },
+    subcontract, IntoKey,
 };
 
 use crate::error::AccError;
@@ -18,7 +21,7 @@ pub struct Signature {
 #[derive(IntoKey)]
 pub struct AccountManager {
     limits: Map<Address, i128>,
-    signers: Map<BytesN<32>, ()>, 
+    signers: Map<BytesN<32>, ()>,
     count: u32,
 }
 
@@ -64,8 +67,6 @@ impl IsAccount for AccountManager {
         env().current_contract_address().require_auth();
         self.limits.set(token, limit);
     }
-
-
 
     // This is the 'entry point' of the account contract and every account
     // contract has to implement it. `require_auth` calls for the Address of
@@ -128,7 +129,7 @@ impl IsAccount for AccountManager {
 
 fn authenticate(
     env: &Env,
-    signers: &Map<BytesN<32>, ()>, 
+    signers: &Map<BytesN<32>, ()>,
     signature_payload: &BytesN<32>,
     signatures: &Vec<Signature>,
 ) -> Result<(), AccError> {
@@ -140,8 +141,7 @@ fn authenticate(
                 return Err(AccError::BadSignatureOrder);
             }
         }
-        if !signers.contains_key(signature.public_key.clone())
-        {
+        if !signers.contains_key(signature.public_key.clone()) {
             return Err(AccError::UnknownSigner);
         }
         env.crypto().ed25519_verify(
@@ -155,7 +155,7 @@ fn authenticate(
 
 fn verify_authorization_policy(
     env: &Env,
-    limits: &Map<Address, i128>, 
+    limits: &Map<Address, i128>,
     context: &Context,
     curr_contract: &Address,
     all_signed: bool,
@@ -181,13 +181,10 @@ fn verify_authorization_policy(
         return Ok(());
     }
 
-
     let spend_left: Option<i128> =
         if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
             Some(spend_left)
-        } else if let Some(limit_left) = limits
-            .get(contract_context.contract.clone())
-        {
+        } else if let Some(limit_left) = limits.get(contract_context.contract.clone()) {
             Some(limit_left)
         } else {
             None

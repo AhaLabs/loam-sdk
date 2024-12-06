@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use super::subcontract::DataKey; 
+use super::subcontract::DataKey;
 use crate::{SorobanContract__, SorobanContract__Client};
 use loam_sdk::soroban_sdk::testutils::storage::{Instance, Persistent, Temporary};
 use loam_sdk::soroban_sdk::testutils::Ledger;

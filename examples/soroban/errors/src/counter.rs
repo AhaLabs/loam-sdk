@@ -1,5 +1,6 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, Lazy}, subcontract, IntoKey
+    soroban_sdk::{self, contracttype, Lazy},
+    subcontract, IntoKey,
 };
 
 #[subcontract]

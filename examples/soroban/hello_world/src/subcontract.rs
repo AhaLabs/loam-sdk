@@ -1,4 +1,7 @@
-use loam_sdk::{soroban_sdk::{self, Lazy, Symbol, Vec}, subcontract, vec };
+use loam_sdk::{
+    soroban_sdk::{self, Lazy, Symbol, Vec},
+    subcontract, vec,
+};
 
 #[derive(Default, Lazy)]
 pub struct Hello;

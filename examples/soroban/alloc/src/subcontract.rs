@@ -21,7 +21,7 @@ impl IsAlloc for AllocContract {
         let mut v1 = vec![];
         (0..count).for_each(|i| v1.push_back(i));
 
-        let mut sum: u32 = 0; 
+        let mut sum: u32 = 0;
         for i in v1 {
             sum = sum.checked_add(i).ok_or(Error::Overflow)?;
         }

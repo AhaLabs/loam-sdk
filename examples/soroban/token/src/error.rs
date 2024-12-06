@@ -11,4 +11,3 @@ pub enum Error {
     ExpirationInPast = 4,
     ExpirationOverflow = 5,
 }
-

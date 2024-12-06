@@ -2,7 +2,8 @@
 
 use super::*;
 use loam_sdk::soroban_sdk::{
-    self, symbol_short, testutils::Logs, xdr::Hash, xdr::ScAddress, Address, BytesN, Env, TryFromVal,
+    self, symbol_short, testutils::Logs, xdr::Hash, xdr::ScAddress, Address, BytesN, Env,
+    TryFromVal,
 };
 
 extern crate std;

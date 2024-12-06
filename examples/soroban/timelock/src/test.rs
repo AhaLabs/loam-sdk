@@ -2,8 +2,10 @@
 extern crate std;
 
 use super::*;
-use crate::{SorobanContract__Client, SorobanContract__};
-use loam_sdk::soroban_sdk::testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation, Ledger};
+use crate::{SorobanContract__, SorobanContract__Client};
+use loam_sdk::soroban_sdk::testutils::{
+    Address as _, AuthorizedFunction, AuthorizedInvocation, Ledger,
+};
 use loam_sdk::soroban_sdk::{self, symbol_short, token, vec, Address, Env, IntoVal};
 use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;

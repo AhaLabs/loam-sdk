@@ -1,6 +1,7 @@
 #![allow(unused)]
 use loam_sdk::{
-    import_contract, soroban_sdk::{self, contractimport, xdr::ToXdr, Address, Bytes, BytesN, Env, IntoVal}
+    import_contract,
+    soroban_sdk::{self, contractimport, xdr::ToXdr, Address, Bytes, BytesN, Env, IntoVal},
 };
 
 import_contract!(example_token);

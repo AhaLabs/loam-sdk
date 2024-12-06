@@ -32,7 +32,6 @@ fn read_allowance(e: &Env, from: Address, spender: Address) -> AllowanceValue {
     }
 }
 
-
 pub(crate) const DAY_IN_LEDGERS: u32 = 17280;
 pub(crate) const INSTANCE_BUMP_AMOUNT: u32 = 7 * DAY_IN_LEDGERS;
 pub(crate) const INSTANCE_LIFETIME_THRESHOLD: u32 = INSTANCE_BUMP_AMOUNT - DAY_IN_LEDGERS;
@@ -83,11 +82,23 @@ impl Default for Token {
 
 #[subcontract]
 pub trait IsTokenTrait {
-    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes) -> Result<(), Error>;
+    fn initialize(
+        &mut self,
+        admin: Address,
+        decimal: u32,
+        name: Bytes,
+        symbol: Bytes,
+    ) -> Result<(), Error>;
     fn allowance(&self, from: Address, spender: Address) -> i128;
     fn balance(&self, id: Address) -> i128;
     fn transfer(&mut self, from: Address, to: Address, amount: i128) -> Result<(), Error>;
-    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) -> Result<(), Error>;
+    fn transfer_from(
+        &mut self,
+        spender: Address,
+        from: Address,
+        to: Address,
+        amount: i128,
+    ) -> Result<(), Error>;
     fn burn(&mut self, from: Address, amount: i128) -> Result<(), Error>;
     fn burn_from(&mut self, spender: Address, from: Address, amount: i128) -> Result<(), Error>;
     fn mint(&mut self, to: Address, amount: i128);
@@ -95,11 +106,23 @@ pub trait IsTokenTrait {
     fn decimals(&self) -> u32;
     fn name(&self) -> Bytes;
     fn symbol(&self) -> Bytes;
-    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32) -> Result<(), Error>;
+    fn approve(
+        &self,
+        from: Address,
+        spender: Address,
+        amount: i128,
+        expiration_ledger: u32,
+    ) -> Result<(), Error>;
 }
 
 impl IsTokenTrait for Token {
-    fn initialize(&mut self, admin: Address, decimal: u32, name: Bytes, symbol: Bytes) -> Result<(), Error> {
+    fn initialize(
+        &mut self,
+        admin: Address,
+        decimal: u32,
+        name: Bytes,
+        symbol: Bytes,
+    ) -> Result<(), Error> {
         if self.admin != env().current_contract_address() {
             return Err(Error::AlreadyInitialized);
         }
@@ -112,7 +135,8 @@ impl IsTokenTrait for Token {
     }
 
     fn allowance(&self, from: Address, spender: Address) -> i128 {
-        env().storage()
+        env()
+            .storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
         read_allowance(env(), from, spender).amount
@@ -134,12 +158,19 @@ impl IsTokenTrait for Token {
         Ok(())
     }
 
-    fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) -> Result<(), Error> {
+    fn transfer_from(
+        &mut self,
+        spender: Address,
+        from: Address,
+        to: Address,
+        amount: i128,
+    ) -> Result<(), Error> {
         spender.require_auth();
 
         check_nonnegative_amount(amount)?;
 
-        env().storage()
+        env()
+            .storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
@@ -169,7 +200,8 @@ impl IsTokenTrait for Token {
 
         check_nonnegative_amount(amount)?;
 
-        env().storage()
+        env()
+            .storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 
@@ -205,19 +237,25 @@ impl IsTokenTrait for Token {
         self.symbol.clone()
     }
 
-    fn approve(&self, from: Address, spender: Address, amount: i128, expiration_ledger: u32) -> Result<(), Error> {
+    fn approve(
+        &self,
+        from: Address,
+        spender: Address,
+        amount: i128,
+        expiration_ledger: u32,
+    ) -> Result<(), Error> {
         from.require_auth();
 
         check_nonnegative_amount(amount)?;
 
-        env().storage()
+        env()
+            .storage()
             .instance()
             .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
         write_allowance(env(), from, spender, amount, expiration_ledger)?;
         Ok(())
     }
 }
-
 
 pub fn write_allowance(
     e: &Env,
@@ -248,7 +286,12 @@ pub fn write_allowance(
     Ok(())
 }
 
-pub fn spend_allowance(e: &Env, from: Address, spender: Address, amount: i128) -> Result<(), Error> {
+pub fn spend_allowance(
+    e: &Env,
+    from: Address,
+    spender: Address,
+    amount: i128,
+) -> Result<(), Error> {
     let allowance = read_allowance(e, from.clone(), spender.clone());
     if allowance.amount < amount {
         return Err(Error::InsufficientAllowance);

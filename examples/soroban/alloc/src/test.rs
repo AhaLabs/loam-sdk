@@ -13,5 +13,4 @@ fn test() {
     assert_eq!(client.sum(&1), 0);
     assert_eq!(client.sum(&2), 1);
     assert_eq!(client.sum(&5), 10);
-
 }

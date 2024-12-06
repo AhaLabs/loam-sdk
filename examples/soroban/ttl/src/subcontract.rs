@@ -1,4 +1,4 @@
-use loam_sdk::soroban_sdk::{self, env, contracttype, Lazy};
+use loam_sdk::soroban_sdk::{self, contracttype, env, Lazy};
 use loam_sdk::subcontract;
 
 #[contracttype]
@@ -35,7 +35,8 @@ impl IsTtl for TtlContract {
     /// Extend the persistent entry TTL to 5000 ledgers, when its
     /// TTL is smaller than 1000 ledgers.
     fn extend_persistent(&self) {
-        env().storage()
+        env()
+            .storage()
             .persistent()
             .extend_ttl(&DataKey::MyKey, 1000, 5000);
     }
@@ -49,7 +50,8 @@ impl IsTtl for TtlContract {
     /// Extend the temporary entry TTL to become at least 7000 ledgers,
     /// when its TTL is smaller than 3000 ledgers.
     fn extend_temporary(&self) {
-        env().storage()
+        env()
+            .storage()
             .temporary()
             .extend_ttl(&DataKey::MyKey, 3000, 7000);
     }

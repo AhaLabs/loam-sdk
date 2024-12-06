@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{Address, env, IntoVal, Lazy, token},
+    soroban_sdk::{env, token, Address, IntoVal, Lazy},
     subcontract,
 };
 
@@ -55,7 +55,6 @@ impl IsAtomicSwap for AtomicSwapContract {
         Ok(())
     }
 }
-
 
 fn move_token(
     token: &Address,

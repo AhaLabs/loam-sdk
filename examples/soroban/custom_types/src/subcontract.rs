@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, Lazy, IntoKey},
+    soroban_sdk::{self, contracttype, IntoKey, Lazy},
     subcontract,
 };
 
@@ -19,7 +19,6 @@ pub trait IsIncrement {
     fn increment(&mut self, incr: u32) -> u32;
     fn get_state(&self) -> State;
 }
-
 
 impl IsIncrement for IncrementContract {
     fn increment(&mut self, incr: u32) -> u32 {

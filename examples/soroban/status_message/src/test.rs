@@ -1,9 +1,7 @@
 #![cfg(test)]
 extern crate std;
 
-use loam_sdk::soroban_sdk::{
-    self, testutils::Address as _, Address, Env, String
-};
+use loam_sdk::soroban_sdk::{self, testutils::Address as _, Address, Env, String};
 
 use crate::{SorobanContract__, SorobanContract__Client};
 

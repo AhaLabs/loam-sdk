@@ -26,7 +26,6 @@ pub struct SingleOffer {
     buy_price: u32,
 }
 
-
 impl Default for SingleOffer {
     fn default() -> Self {
         Self {
@@ -49,12 +48,16 @@ pub trait IsSingleOfferTrait {
         sell_price: u32,
         buy_price: u32,
     ) -> Result<(), SingleOfferError>;
-    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) -> Result<(), SingleOfferError>;
+    fn trade(
+        &self,
+        buyer: Address,
+        buy_token_amount: i128,
+        min_sell_token_amount: i128,
+    ) -> Result<(), SingleOfferError>;
     fn withdraw(&self, token: Address, amount: i128) -> Result<(), SingleOfferError>;
     fn updt_price(&mut self, sell_price: u32, buy_price: u32) -> Result<(), SingleOfferError>;
     fn get_offer(&self) -> SingleOffer;
 }
-
 
 impl IsSingleOfferTrait for SingleOffer {
     fn create(
@@ -72,7 +75,7 @@ impl IsSingleOfferTrait for SingleOffer {
             return Err(SingleOfferError::ZeroPriceNotAllowed);
         }
         seller.require_auth();
-        
+
         self.seller = seller;
         self.sell_token = sell_token;
         self.buy_token = buy_token;
@@ -87,7 +90,12 @@ impl IsSingleOfferTrait for SingleOffer {
     // accept.
     // Buyer needs to authorize the `trade` call and internal `transfer` call to
     // the contract address.
-    fn trade(&self, buyer: Address, buy_token_amount: i128, min_sell_token_amount: i128) -> Result<(), SingleOfferError> {
+    fn trade(
+        &self,
+        buyer: Address,
+        buy_token_amount: i128,
+        min_sell_token_amount: i128,
+    ) -> Result<(), SingleOfferError> {
         // Buyer needs to authorize the trade.
         buyer.require_auth();
 
@@ -103,7 +111,6 @@ impl IsSingleOfferTrait for SingleOffer {
         if sell_token_amount < min_sell_token_amount {
             return Err(SingleOfferError::PriceTooLow);
         }
-
 
         let contract = env().current_contract_address();
 

@@ -6,8 +6,8 @@ use loam_subcontract_core::{admin::Admin, Core};
 
 mod error;
 mod single_offer;
-pub use single_offer::*;
 use error::SingleOfferError;
+pub use single_offer::*;
 
 #[derive_contract(Core(Admin), SingleOfferTrait(SingleOffer))]
 pub struct Contract;

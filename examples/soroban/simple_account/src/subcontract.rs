@@ -1,6 +1,6 @@
 use loam_sdk::{
     soroban_sdk::{self, auth::Context, contracttype, env, BytesN, Lazy, Vec},
-    subcontract, IntoKey
+    subcontract, IntoKey,
 };
 
 use crate::error::SimpleAccError;
@@ -14,7 +14,7 @@ pub struct SimpleAccountManager {
 impl Default for SimpleAccountManager {
     fn default() -> Self {
         SimpleAccountManager {
-            owner: BytesN::from_array(env(),&[0; 32]),
+            owner: BytesN::from_array(env(), &[0; 32]),
         }
     }
 }
@@ -31,7 +31,7 @@ pub trait IsSimpleAccount {
 
 impl IsSimpleAccount for SimpleAccountManager {
     fn init(&mut self, public_key: BytesN<32>) -> Result<(), SimpleAccError> {
-        if !(self.owner ==  BytesN::from_array(env(),&[0; 32])){
+        if !(self.owner == BytesN::from_array(env(), &[0; 32])) {
             return Err(SimpleAccError::OwnerAlreadySet);
         }
         self.owner = public_key;
@@ -48,13 +48,13 @@ impl IsSimpleAccount for SimpleAccountManager {
         if signatures.len() != 1 {
             return Err(SimpleAccError::IncorrectSignatureCount);
         }
-        
+
         env().crypto().ed25519_verify(
             &self.owner,
             &signature_payload.into(),
             &signatures.get(0).unwrap(),
         );
-        
+
         Ok(())
     }
 }

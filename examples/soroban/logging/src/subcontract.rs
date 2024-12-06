@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{env, Env, Lazy, Symbol, log},
+    soroban_sdk::{env, log, Env, Lazy, Symbol},
     subcontract,
 };
 

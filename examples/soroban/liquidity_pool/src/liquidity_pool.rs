@@ -1,10 +1,10 @@
 use core::ops::Add;
 
+use crate::{error::Error, token::example_token as token};
 use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy, Symbol},
     subcontract,
 };
-use crate::{error::Error, token::example_token as token};
 use num_integer::Roots;
 
 #[contracttype]
@@ -33,21 +33,45 @@ impl Default for LiquidityPool {
 
 #[subcontract]
 pub trait IsLiquidityPoolTrait {
-    fn initialize(&mut self, token_wasm_hash: BytesN<32>, token_a: Address, token_b: Address) -> Result<(), Error>;
+    fn initialize(
+        &mut self,
+        token_wasm_hash: BytesN<32>,
+        token_a: Address,
+        token_b: Address,
+    ) -> Result<(), Error>;
     fn share_id(&self) -> Address;
-    fn deposit(&mut self, to: Address, desired_a: i128, min_a: i128, desired_b: i128, min_b: i128) -> Result<(), Error>;
+    fn deposit(
+        &mut self,
+        to: Address,
+        desired_a: i128,
+        min_a: i128,
+        desired_b: i128,
+        min_b: i128,
+    ) -> Result<(), Error>;
     fn swap(&mut self, to: Address, buy_a: bool, out: i128, in_max: i128) -> Result<(), Error>;
-    fn withdraw(&mut self, to: Address, share_amount: i128, min_a: i128, min_b: i128) -> Result<(i128, i128), Error>;
+    fn withdraw(
+        &mut self,
+        to: Address,
+        share_amount: i128,
+        min_a: i128,
+        min_b: i128,
+    ) -> Result<(i128, i128), Error>;
     fn get_rsrvs(&self) -> (i128, i128);
 }
 
 impl IsLiquidityPoolTrait for LiquidityPool {
-    fn initialize(&mut self, token_wasm_hash: BytesN<32>, token_a: Address, token_b: Address) -> Result<(), Error> {
+    fn initialize(
+        &mut self,
+        token_wasm_hash: BytesN<32>,
+        token_a: Address,
+        token_b: Address,
+    ) -> Result<(), Error> {
         if token_a >= token_b {
             return Err(Error::InvalidTokenOrder);
         }
 
-        let share_contract_id = crate::token::create_contract(env(), &token_wasm_hash, &token_a, &token_b);
+        let share_contract_id =
+            crate::token::create_contract(env(), &token_wasm_hash, &token_a, &token_b);
         token::Client::new(env(), &share_contract_id).initialize(
             &env().current_contract_address(),
             &7u32,
@@ -67,14 +91,22 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         self.token_share.clone()
     }
 
-    fn deposit(&mut self, to: Address, desired_a: i128, min_a: i128, desired_b: i128, min_b: i128) -> Result<(), Error> {
+    fn deposit(
+        &mut self,
+        to: Address,
+        desired_a: i128,
+        min_a: i128,
+        desired_b: i128,
+        min_b: i128,
+    ) -> Result<(), Error> {
         // Depositor needs to authorize the deposit
         to.require_auth();
 
         let (reserve_a, reserve_b) = (self.reserve_a, self.reserve_b);
 
         // Calculate deposit amounts
-        let amounts = get_deposit_amounts(desired_a, min_a, desired_b, min_b, reserve_a, reserve_b)?;
+        let amounts =
+            get_deposit_amounts(desired_a, min_a, desired_b, min_b, reserve_a, reserve_b)?;
 
         let token_a_client = token::Client::new(env(), &self.token_a);
         let token_b_client = token::Client::new(env(), &self.token_b);
@@ -125,7 +157,11 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         }
 
         // Transfer the amount being sold to the contract
-        let sell_token = if buy_a { self.token_b.clone() } else { self.token_a.clone() };
+        let sell_token = if buy_a {
+            self.token_b.clone()
+        } else {
+            self.token_a.clone()
+        };
         let sell_token_client = token::Client::new(env(), &sell_token);
         sell_token_client.transfer(&to, &env().current_contract_address(), &sell_amount);
 
@@ -162,9 +198,17 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         }
 
         if buy_a {
-            token::Client::new(env(), &self.token_a).transfer(&env().current_contract_address(), &to, &out_a);
+            token::Client::new(env(), &self.token_a).transfer(
+                &env().current_contract_address(),
+                &to,
+                &out_a,
+            );
         } else {
-            token::Client::new(env(), &self.token_b).transfer(&env().current_contract_address(), &to, &out_b);
+            token::Client::new(env(), &self.token_b).transfer(
+                &env().current_contract_address(),
+                &to,
+                &out_b,
+            );
         }
 
         self.reserve_a = balance_a - out_a;
@@ -172,7 +216,13 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         Ok(())
     }
 
-    fn withdraw(&mut self, to: Address, share_amount: i128, min_a: i128, min_b: i128) -> Result<(i128, i128), Error> {
+    fn withdraw(
+        &mut self,
+        to: Address,
+        share_amount: i128,
+        min_a: i128,
+        min_b: i128,
+    ) -> Result<(i128, i128), Error> {
         to.require_auth();
 
         // First transfer the pool shares that need to be redeemed
@@ -196,8 +246,16 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         share_token_client.burn(&env().current_contract_address(), &balance_shares);
         self.total_shares -= balance_shares;
 
-        token::Client::new(env(), &self.token_a).transfer(&env().current_contract_address(), &to, &out_a);
-        token::Client::new(env(), &self.token_b).transfer(&env().current_contract_address(), &to, &out_b);
+        token::Client::new(env(), &self.token_a).transfer(
+            &env().current_contract_address(),
+            &to,
+            &out_a,
+        );
+        token::Client::new(env(), &self.token_b).transfer(
+            &env().current_contract_address(),
+            &to,
+            &out_b,
+        );
 
         self.reserve_a = balance_a - out_a;
         self.reserve_b = balance_b - out_b;

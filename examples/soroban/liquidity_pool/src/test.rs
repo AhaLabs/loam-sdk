@@ -1,16 +1,17 @@
 #![cfg(test)]
 extern crate std;
 
-use crate::{token::example_token as token, SorobanContract__Client, SorobanContract__};
+use crate::{token::example_token as token, SorobanContract__, SorobanContract__Client};
 
 use loam_sdk::import_contract;
-use loam_sdk::soroban_sdk::{self, symbol_short, testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation}, Address, BytesN, Env, IntoVal};
+use loam_sdk::soroban_sdk::{
+    self, symbol_short,
+    testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
+    Address, BytesN, Env, IntoVal,
+};
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> token::Client<'a> {
-    token::Client::new(
-        e,
-        &e.register_stellar_asset_contract(admin.clone()),
-    )
+    token::Client::new(e, &e.register_stellar_asset_contract(admin.clone()))
 }
 
 fn create_liqpool_contract<'a>(

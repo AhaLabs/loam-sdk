@@ -25,7 +25,8 @@ impl IsIncrementable for Counter {
         //   - The "COUNTER" symbol.
         //   - The "increment" symbol.
         // The event data is the count.
-        env().events()
+        env()
+            .events()
             .publish((COUNTER, Symbol::short("increment")), self.0);
 
         // Return the count to the caller.

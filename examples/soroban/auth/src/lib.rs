@@ -13,7 +13,7 @@
 
 #![no_std]
 use loam_sdk::{derive_contract, soroban_sdk::Address};
-use loam_subcontract_core::{admin::Admin,Core};
+use loam_subcontract_core::{admin::Admin, Core};
 
 mod subcontract;
 pub use subcontract::*;

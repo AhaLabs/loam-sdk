@@ -1,13 +1,11 @@
 #![cfg(test)]
 extern crate std;
 
-use crate::{SorobanContract__Client, SorobanContract__};
+use crate::{SorobanContract__, SorobanContract__Client};
 use loam_sdk::soroban_sdk::{
-    self,
-    token,
-    symbol_short,
+    self, symbol_short,
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
-    Address, Env, IntoVal, Symbol,
+    token, Address, Env, IntoVal, Symbol,
 };
 
 fn create_token_contract<'a>(

@@ -3,8 +3,7 @@ extern crate std;
 
 use super::*;
 use loam_sdk::soroban_sdk::{
-    self,
-    symbol_short,
+    self, symbol_short,
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
     token, Address, Env, IntoVal,
 };

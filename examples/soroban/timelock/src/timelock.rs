@@ -5,7 +5,7 @@
 //! account(s) claim it before or after provided time point.
 //! For simplicity, the contract only supports invoker-based auth.
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Lazy, BytesN, Env, IntoKey, Vec},
+    soroban_sdk::{self, contracttype, env, Address, BytesN, Env, IntoKey, Lazy, Vec},
     subcontract,
 };
 

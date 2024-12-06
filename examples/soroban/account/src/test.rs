@@ -1,7 +1,6 @@
 #![cfg(test)]
 extern crate std;
 
-
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
 use loam_sdk::soroban_sdk::symbol_short;
@@ -12,11 +11,15 @@ use loam_sdk::soroban_sdk::FromVal;
 use loam_sdk::soroban_sdk::Val;
 use rand::thread_rng;
 //use loam_sdk::soroban_sdk::testutils::aut^i
-use loam_sdk::soroban_sdk::auth::{ContractContext, Context};
-use loam_sdk::soroban_sdk::{self, testutils::{BytesN as _, Address as _, AuthorizedFunction, AuthorizedInvocation}, vec, BytesN, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::auth::{Context, ContractContext};
+use loam_sdk::soroban_sdk::{
+    self,
+    testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation, BytesN as _},
+    vec, BytesN, Env, IntoVal, Symbol,
+};
 
 use crate::AccError;
-use crate::{SorobanContract__, SorobanContract__Client, Signature};
+use crate::{Signature, SorobanContract__, SorobanContract__Client};
 
 fn generate_keypair() -> Keypair {
     Keypair::generate(&mut thread_rng())
@@ -41,12 +44,7 @@ fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {
     .into_val(e)
 }
 
-fn token_auth_context(
-    e: &Env,
-    token_id: &Address,
-    fn_name: Symbol,
-    amount: i128,
-) -> Context {
+fn token_auth_context(e: &Env, token_id: &Address, fn_name: Symbol, amount: i128) -> Context {
     Context::Contract(ContractContext {
         contract: token_id.clone(),
         fn_name,

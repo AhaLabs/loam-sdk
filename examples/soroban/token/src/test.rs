@@ -3,7 +3,7 @@ extern crate std;
 
 use crate::{SorobanContract__, SorobanContract__Client};
 use loam_sdk::soroban_sdk::{
-    symbol_short, self,
+    self, symbol_short,
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
     Address, Env, IntoVal, Symbol,
 };

@@ -4,8 +4,7 @@ extern crate std;
 use super::*;
 use assert_unordered::assert_eq_unordered;
 use loam_sdk::soroban_sdk::{
-    self,
-    symbol_short,
+    self, symbol_short,
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
     token, Address, Env, IntoVal,
 };
