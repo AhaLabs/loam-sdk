@@ -182,7 +182,9 @@ fn verify_authorization_policy(
     let spend_left: Option<i128> =
         if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
             Some(spend_left)
-        } else { limits.get(contract_context.contract.clone()) };
+        } else {
+            limits.get(contract_context.contract.clone())
+        };
 
     // 'None' means that the contract is outside of the policy.
     if let Some(spend_left) = spend_left {

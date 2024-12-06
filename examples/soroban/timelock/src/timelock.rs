@@ -99,7 +99,12 @@ impl IsTimelockTrait for Timelock {
         let token_client = soroban_sdk::token::Client::new(env(), &token.clone());
         token_client.transfer(&from, &env().current_contract_address(), &amount);
 
-        self.balance = ClaimableBalance { token, amount, claimants, time_bound };
+        self.balance = ClaimableBalance {
+            token,
+            amount,
+            claimants,
+            time_bound,
+        };
         Ok(())
     }
 

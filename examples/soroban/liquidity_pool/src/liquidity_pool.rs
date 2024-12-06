@@ -216,7 +216,7 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         let new_reserve_b = balance_b - out_b;
 
         if new_reserve_a <= 0 || new_reserve_b <= 0 {
-            return Err(Error::NewReservesMustBePositive)
+            return Err(Error::NewReservesMustBePositive);
         }
 
         self.reserve_a = new_reserve_a;
