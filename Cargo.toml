@@ -14,7 +14,7 @@ loam-soroban-sdk = { path = "./crates/loam-soroban-sdk" }
 loam-sdk-macro = { path = "./crates/loam-sdk-macro" }
 loam-subcontract-ft = { path = "./crates/loam-subcontract-ft" }
 
-soroban-sdk = "21.7.2"
+soroban-sdk = "22.0.0-rc.3"
 stellar-xdr = "22.0.0-rc.1.1"
 stellar-strkey = "0.0.11"
 
