@@ -114,7 +114,6 @@ pub fn derive_contract(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Panics
 ///
-
 #[proc_macro]
 pub fn stellar_asset(input: TokenStream) -> TokenStream {
     // Parse the input as a string literal

@@ -26,6 +26,7 @@ pub fn set_env(env: Env) {
 /// It is expected that the environment is always initialized before this
 /// function is called in normal operation.
 #[must_use]
+#[allow(static_mut_refs)]
 pub fn env() -> &'static Env {
     unsafe { ENV.as_ref().unwrap() }
 }
