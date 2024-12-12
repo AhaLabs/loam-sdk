@@ -1,11 +1,13 @@
 #![recursion_limit = "128"]
 extern crate proc_macro;
 use proc_macro::TokenStream;
+use heck::ToUpperCamelCase;
 use std::env;
 use subcontract::derive_contract_impl;
 
 use quote::quote;
 use syn::Item;
+use syn::{parse_macro_input, DeriveInput, Data, Fields, Type};
 
 mod contract;
 mod subcontract;
@@ -123,4 +125,166 @@ pub fn stellar_asset(input: TokenStream) -> TokenStream {
 
     // Return the generated code as a TokenStream
     asset.into()
+}
+
+
+#[proc_macro_attribute]
+pub fn loamstorage(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+    let struct_name = &input.ident;
+
+    let fields = match &input.data {
+        Data::Struct(data) => {
+            match &data.fields {
+                Fields::Named(fields) => &fields.named,
+                _ => panic!("Only named fields are supported"),
+            }
+        },
+        _ => panic!("Only structs are supported"),
+    };
+
+    let (struct_fields, additional_items): (Vec<_>, Vec<_>) = fields.iter().map(|field| {
+        let field_name = &field.ident;
+        let field_type = &field.ty;
+
+        if let Type::Path(type_path) = field_type {
+            let last_segment = type_path.path.segments.last().unwrap();
+            let key_wrapper = quote::format_ident!("{}Key", field_name.as_ref().unwrap().to_string().to_upper_camel_case());
+
+            match last_segment.ident.to_string().as_str() {
+                "PersistentMap" => {
+                    let args = &last_segment.arguments;
+                    if let syn::PathArguments::AngleBracketed(generic_args) = args {
+                        if generic_args.args.len() == 2 {
+                            let key_type = &generic_args.args[0];
+                            let value_type = &generic_args.args[1];
+
+                            let additional_item = quote! {
+                                #[derive(Clone)]
+                                pub struct #key_wrapper(#key_type);
+
+                                impl From<#key_type> for #key_wrapper {
+                                    fn from(key: #key_type) -> Self {
+                                        Self(key)
+                                    }
+                                }
+
+                                impl LoamKey for #key_wrapper {
+                                    fn to_key(&self) -> Val {
+                                        DataKey::#field_name(self.0.clone()).into_val(env())
+                                    }
+                                }
+
+                            };
+                            let struct_field = quote! { #field_name: PersistentMap<#key_type, #value_type, #key_wrapper> };
+                            (struct_field, additional_item)
+                        } else {
+                            panic!("PersistentMap must contain value and type");
+                        }
+                    } else {
+                        panic!("PersistentMap must contain value and type");
+                    }
+                },
+                "PersistentStore" => {
+                    let args = &last_segment.arguments;
+                    if let syn::PathArguments::AngleBracketed(generic_args) = args {
+                        let value_type = &generic_args.args[0];
+    
+                        let struct_field = quote! { #field_name: PersistentStore<#value_type, #key_wrapper> };
+                        let additional_item = quote! {
+                            #[derive(Clone, Default)]
+                            pub struct #key_wrapper;
+    
+                            impl LoamKey for #key_wrapper {
+                                fn to_key(&self) -> Val {
+                                    DataKey::#field_name.into_val(env())
+                                }
+                            }
+
+                        };
+                        (struct_field, additional_item)
+                    } else {
+                        panic!("PersistentStore must contain type");
+                    }
+                },
+                _ => panic!("Must use one of PersistentStore or PersistentMap"),
+            }
+        } else {
+            panic!("Must use one of PersistentStore or PersistentMap");
+        }
+    }).unzip();
+
+    let field_names = fields.iter().map(|f| &f.ident);
+
+    let main_struct = quote! {
+        #[derive(Clone, Default)]
+        pub struct #struct_name {
+            #(#struct_fields,)*
+        }
+
+        impl #struct_name {
+            pub fn new() -> Self {
+                Self {
+                    #(#field_names: Default::default(),)*
+                }
+            }
+        }
+
+        impl Lazy for #struct_name {
+            fn get_lazy() -> Option<Self> {
+                Some(#struct_name::default())
+            }
+
+            fn set_lazy(self) {
+            }
+        }
+    };
+
+    let data_key_variants = fields.iter().map(|field| {
+        let field_name = &field.ident;
+        let field_type = &field.ty;
+
+        if let Type::Path(type_path) = field_type {
+            let last_segment = type_path.path.segments.last().unwrap();
+            match last_segment.ident.to_string().as_str() {
+                "PersistentMap" => {
+                    let args = &last_segment.arguments;
+                    if let syn::PathArguments::AngleBracketed(generic_args) = args {
+                        if generic_args.args.len() == 2 {
+                            let key_type = &generic_args.args[0];
+                            quote! { #field_name(#key_type) }
+                        } else {
+                            quote! { #field_name }
+                        }
+                    } else {
+                        quote! { #field_name }
+                    }
+                },
+                "PersistentStore" => {
+                    quote! { #field_name }
+                },
+                _ => quote! { #field_name },
+            }
+        } else {
+            quote! { #field_name }
+        }
+    });
+
+    let additional_items = quote! {
+        #[derive(Clone)]
+        #[contracttype]
+        pub enum DataKey {
+            #(#data_key_variants,)*
+        }
+
+        #(#additional_items)*
+    };
+
+    let result = quote! {
+        #main_struct
+
+        #additional_items
+    };
+
+    result.into()
 }

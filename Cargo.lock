@@ -2136,6 +2136,7 @@ dependencies = [
  "assert_fs",
  "cargo_metadata 0.18.1",
  "darling",
+ "heck 0.5.0",
  "itertools 0.13.0",
  "loam-build",
  "proc-macro2",
