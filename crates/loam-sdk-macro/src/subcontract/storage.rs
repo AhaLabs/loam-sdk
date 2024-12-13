@@ -30,7 +30,6 @@ fn generate_storage(item_struct: ItemStruct) -> Result<TokenStream> {
         .map(|field| {
             let field_name = &field.ident;
             let field_type = &field.ty;
-
             if let Type::Path(type_path) = field_type {
                 let last_segment = type_path.path.segments.last().unwrap();
                 let key_wrapper = format_ident!("{}Key", field_name.as_ref().unwrap().to_string().to_upper_camel_case());
@@ -103,31 +102,39 @@ fn generate_map_field(
     map_type: String,
 ) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
-        let args = &type_path.path.segments.last().unwrap().arguments;
-        if let syn::PathArguments::AngleBracketed(generic_args) = args {
-            if generic_args.args.len() == 2 {
-                let key_type = &generic_args.args[0];
-                let value_type = &generic_args.args[1];
+        let last_segment = type_path.path.segments.last().unwrap();
+        if last_segment.ident == map_type {
+            if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
+                if generic_args.args.len() == 2 {
+                    let key_type = &generic_args.args[0];
+                    let value_type = &generic_args.args[1];
 
-                let additional_item = quote! {
-                    #[derive(Clone)]
-                    pub struct #key_wrapper(#key_type);
+                    let additional_item = quote! {
+                        #[derive(Clone)]
+                        pub struct #key_wrapper(#key_type);
 
-                    impl From<#key_type> for #key_wrapper {
-                        fn from(key: #key_type) -> Self {
-                            Self(key)
+                        impl From<#key_type> for #key_wrapper {
+                            fn from(key: #key_type) -> Self {
+                                Self(key)
+                            }
                         }
-                    }
 
-                    impl LoamKey for #key_wrapper {
-                        fn to_key(&self) -> Val {
-                            DataKey::#field_name(self.0.clone()).into_val(env())
+                        impl LoamKey for #key_wrapper {
+                            fn to_key(&self) -> Val {
+                                DataKey::#field_name(self.0.clone()).into_val(env())
+                            }
                         }
-                    }
-                };
-                let struct_field =
-                    quote! { #field_name: #map_type<#key_type, #value_type, #key_wrapper> };
-                Ok((struct_field, additional_item))
+                    };
+                    let map_type_ident = format_ident!("{}", map_type);
+                    let struct_field =
+                        quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
+                    Ok((struct_field, additional_item))
+                } else {
+                    Err(Error::new_spanned(
+                        field_type,
+                        format!("{} must contain key and value types", map_type),
+                    ))
+                }
             } else {
                 Err(Error::new_spanned(
                     field_type,
@@ -137,13 +144,13 @@ fn generate_map_field(
         } else {
             Err(Error::new_spanned(
                 field_type,
-                format!("{} must contain key and value types", map_type),
+                format!("Expected {}, found {}", map_type, last_segment.ident),
             ))
         }
     } else {
         Err(Error::new_spanned(
             field_type,
-            format!("{} must contain key and value types", map_type),
+            format!("{} must be a path type", map_type),
         ))
     }
 }
@@ -155,32 +162,39 @@ fn generate_store_field(
     store_type: String,
 ) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
-        let args = &type_path.path.segments.last().unwrap().arguments;
-        if let syn::PathArguments::AngleBracketed(generic_args) = args {
-            let value_type = &generic_args.args[0];
+        let last_segment = type_path.path.segments.last().unwrap();
+        if last_segment.ident == store_type {
+            if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
+                let value_type = &generic_args.args[0];
+                let store_type_ident= format_ident!("{}", store_type);
+                let struct_field = quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
+                let additional_item = quote! {
+                    #[derive(Clone, Default)]
+                    pub struct #key_wrapper;
 
-            let struct_field = quote! { #field_name: #store_type<#value_type, #key_wrapper> };
-            let additional_item = quote! {
-                #[derive(Clone, Default)]
-                pub struct #key_wrapper;
-
-                impl LoamKey for #key_wrapper {
-                    fn to_key(&self) -> Val {
-                        DataKey::#field_name.into_val(env())
+                    impl LoamKey for #key_wrapper {
+                        fn to_key(&self) -> Val {
+                            DataKey::#field_name.into_val(env())
+                        }
                     }
-                }
-            };
-            Ok((struct_field, additional_item))
+                };
+                Ok((struct_field, additional_item))
+            } else {
+                Err(Error::new_spanned(
+                    field_type,
+                    format!("{} must contain value type", store_type),
+                ))
+            }
         } else {
             Err(Error::new_spanned(
                 field_type,
-                format!("{} must contain value type", store_type),
+                format!("Expected {}, found {}", store_type, last_segment.ident),
             ))
         }
     } else {
         Err(Error::new_spanned(
             field_type,
-            format!("{} must contain value type", store_type),
+            format!("{} must be a path type", store_type),
         ))
     }
 }
