@@ -11,7 +11,9 @@ pub async fn start_local_stellar() -> Result<(), Box<dyn Error>> {
             tokio::time::sleep(std::time::Duration::from_secs(10)).await;
         }
         Err(e) => {
-            if e.to_string().contains("already in use") || e.to_string().contains("port is already allocated") {
+            if e.to_string().contains("already in use")
+                || e.to_string().contains("port is already allocated")
+            {
                 eprintln!("Container is already running, proceeding to health check...");
             } else {
                 return Err(Box::new(e));
