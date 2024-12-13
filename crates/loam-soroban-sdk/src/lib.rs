@@ -2,7 +2,7 @@
 
 pub use soroban_sdk::*;
 pub mod into_key;
-pub mod loam_storage; 
+pub mod loam_storage;
 
 pub use into_key::IntoKey;
 pub use loam_storage::*;

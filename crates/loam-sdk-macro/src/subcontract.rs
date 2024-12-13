@@ -10,6 +10,7 @@ use crate::{
 
 pub mod into_key;
 pub mod lazy;
+pub mod storage;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
