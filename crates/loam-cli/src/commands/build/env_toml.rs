@@ -77,7 +77,7 @@ pub struct Network {
     pub rpc_url: Option<String>,
     pub network_passphrase: Option<String>,
     pub rpc_headers: Option<Vec<(String, String)>>,
-    // run_locally: Option<bool>,
+    pub run_locally: Option<bool>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

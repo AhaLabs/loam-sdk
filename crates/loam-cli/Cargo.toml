@@ -42,6 +42,7 @@ sha2 = { workspace = true }
 
 clap-cargo-extra = "0.3.0"
 
+reqwest = { version = "0.12.9", features = ["json"] }
 thiserror = "1.0.31"
 serde = "1.0.82"
 serde_derive = "1.0.82"
