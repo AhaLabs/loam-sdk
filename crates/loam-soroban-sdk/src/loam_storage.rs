@@ -1,3 +1,4 @@
+#![allow(clippy::must_use_candidate, clippy::missing_errors_doc)]
 use core::marker::PhantomData;
 
 use soroban_sdk::{Env, IntoVal, TryFromVal, Val};
@@ -40,10 +41,10 @@ where
         env().storage().persistent().get(&k)
     }
 
-    pub fn set(&mut self, key: K, value: V) {
+    pub fn set(&mut self, key: K, value: &V) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().persistent().set(&k, &value);
+        env().storage().persistent().set(&k, value);
     }
 
     pub fn has(&self, key: K) -> bool {
@@ -70,13 +71,13 @@ where
         env()
             .storage()
             .persistent()
-            .extend_ttl(&k, threshold, extend_to)
+            .extend_ttl(&k, threshold, extend_to);
     }
 
     pub fn remove(&self, key: K) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().persistent().remove(&k)
+        env().storage().persistent().remove(&k);
     }
 }
 
@@ -118,9 +119,9 @@ where
         env().storage().persistent().get(&key)
     }
 
-    pub fn set(&mut self, value: V) {
+    pub fn set(&mut self, value: &V) {
         let key = K::default().to_key();
-        env().storage().persistent().set(&key, &value);
+        env().storage().persistent().set(&key, value);
     }
 
     pub fn has(&self) -> bool {
@@ -143,12 +144,12 @@ where
         env()
             .storage()
             .persistent()
-            .extend_ttl(&key, threshold, extend_to)
+            .extend_ttl(&key, threshold, extend_to);
     }
 
     pub fn remove(&self) {
         let key = K::default().to_key();
-        env().storage().persistent().remove(&key)
+        env().storage().persistent().remove(&key);
     }
 }
 
@@ -194,10 +195,10 @@ where
         env().storage().instance().get(&k)
     }
 
-    pub fn set(&mut self, key: K, value: V) {
+    pub fn set(&mut self, key: K, value: &V) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().instance().set(&k, &value);
+        env().storage().instance().set(&k, value);
     }
 
     pub fn has(&self, key: K) -> bool {
@@ -219,13 +220,13 @@ where
     }
 
     pub fn extend_ttl(&self, threshold: u32, extend_to: u32) {
-        env().storage().instance().extend_ttl(threshold, extend_to)
+        env().storage().instance().extend_ttl(threshold, extend_to);
     }
 
     pub fn remove(&self, key: K) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().instance().remove(&k)
+        env().storage().instance().remove(&k);
     }
 }
 
@@ -261,10 +262,10 @@ where
         env().storage().temporary().get(&k)
     }
 
-    pub fn set(&mut self, key: K, value: V) {
+    pub fn set(&mut self, key: K, value: &V) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().temporary().set(&k, &value);
+        env().storage().temporary().set(&k, value);
     }
 
     pub fn has(&self, key: K) -> bool {
@@ -291,13 +292,13 @@ where
         env()
             .storage()
             .temporary()
-            .extend_ttl(&k, threshold, extend_to)
+            .extend_ttl(&k, threshold, extend_to);
     }
 
     pub fn remove(&self, key: K) {
         let w: W = key.into();
         let k = w.to_key();
-        env().storage().temporary().remove(&k)
+        env().storage().temporary().remove(&k);
     }
 }
 
@@ -350,9 +351,9 @@ where
         env().storage().instance().get(&key)
     }
 
-    pub fn set(&mut self, value: V) {
+    pub fn set(&mut self, value: &V) {
         let key = K::default().to_key();
-        env().storage().instance().set(&key, &value);
+        env().storage().instance().set(&key, value);
     }
 
     pub fn has(&self) -> bool {
@@ -371,12 +372,12 @@ where
     }
 
     pub fn extend_ttl(&self, threshold: u32, extend_to: u32) {
-        env().storage().instance().extend_ttl(threshold, extend_to)
+        env().storage().instance().extend_ttl(threshold, extend_to);
     }
 
     pub fn remove(&self) {
         let key = K::default().to_key();
-        env().storage().instance().remove(&key)
+        env().storage().instance().remove(&key);
     }
 }
 
@@ -407,9 +408,9 @@ where
         env().storage().temporary().get(&key)
     }
 
-    pub fn set(&mut self, value: V) {
+    pub fn set(&mut self, value: &V) {
         let key = K::default().to_key();
-        env().storage().temporary().set(&key, &value);
+        env().storage().temporary().set(&key, value);
     }
 
     pub fn has(&self) -> bool {
@@ -432,12 +433,12 @@ where
         env()
             .storage()
             .temporary()
-            .extend_ttl(&key, threshold, extend_to)
+            .extend_ttl(&key, threshold, extend_to);
     }
 
     pub fn remove(&self) {
         let key = K::default().to_key();
-        env().storage().temporary().remove(&key)
+        env().storage().temporary().remove(&key);
     }
 }
 

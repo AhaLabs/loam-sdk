@@ -1,11 +1,11 @@
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Error, Fields, Item, ItemStruct, Result, Type};
+use syn::{Error, Fields, FieldsNamed, Item, ItemStruct, Result, Type};
 
 pub(crate) fn from_item(item: Item) -> Result<TokenStream> {
     match item {
-        Item::Struct(item_struct) => generate_storage(item_struct),
+        Item::Struct(item_struct) => generate_storage(&item_struct),
         _ => Err(Error::new_spanned(
             item,
             "loamstorage can only be applied to structs",
@@ -13,33 +13,30 @@ pub(crate) fn from_item(item: Item) -> Result<TokenStream> {
     }
 }
 
-fn generate_storage(item_struct: ItemStruct) -> Result<TokenStream> {
+fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
     let struct_name = &item_struct.ident;
-    let fields = match &item_struct.fields {
-        Fields::Named(fields) => &fields.named,
-        _ => {
-            return Err(Error::new_spanned(
-                &item_struct,
-                "Only named fields are supported",
-            ))
-        }
+    let Fields::Named(FieldsNamed { named: fields, .. }) = &item_struct.fields else {
+        return Err(Error::new_spanned(
+            item_struct,
+            "Only named fields are supported",
+        ));
     };
 
     let (struct_fields, additional_items): (Vec<TokenStream>, Vec<TokenStream>) = fields
         .iter()
         .map(|field| {
-            let field_name = &field.ident;
+            let field_name = field.ident.as_ref();
             let field_type = &field.ty;
             if let Type::Path(type_path) = field_type {
                 let last_segment = type_path.path.segments.last().unwrap();
                 let key_wrapper = format_ident!("{}Key", field_name.as_ref().unwrap().to_string().to_upper_camel_case());
 
                 match last_segment.ident.to_string().as_str() {
-                    "PersistentMap" | "InstanceMap" | "TempMap" => {
-                        generate_map_field(field_name, field_type, &key_wrapper, last_segment.ident.to_string())
+                    ident @ ("PersistentMap" | "InstanceMap" | "TempMap") => {
+                        generate_map_field(field_name, field_type, &key_wrapper, ident)
                     },
-                    "PersistentStore" | "InstanceStore" | "TempStore" => {
-                        generate_store_field(field_name, field_type, &key_wrapper, last_segment.ident.to_string())
+                    ident @ ("PersistentStore" | "InstanceStore" | "TempStore") => {
+                        generate_store_field(field_name, field_type, &key_wrapper, ident)
                     },
                     _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
                 }
@@ -96,10 +93,10 @@ fn generate_storage(item_struct: ItemStruct) -> Result<TokenStream> {
 }
 
 fn generate_map_field(
-    field_name: &Option<syn::Ident>,
+    field_name: Option<&syn::Ident>,
     field_type: &Type,
     key_wrapper: &syn::Ident,
-    map_type: String,
+    map_type: &str,
 ) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
         let last_segment = type_path.path.segments.last().unwrap();
@@ -126,19 +123,18 @@ fn generate_map_field(
                         }
                     };
                     let map_type_ident = format_ident!("{}", map_type);
-                    let struct_field =
-                        quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
+                    let struct_field = quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
                     Ok((struct_field, additional_item))
                 } else {
                     Err(Error::new_spanned(
                         field_type,
-                        format!("{} must contain key and value types", map_type),
+                        format!("{map_type} must contain key and value types"),
                     ))
                 }
             } else {
                 Err(Error::new_spanned(
                     field_type,
-                    format!("{} must contain key and value types", map_type),
+                    format!("{map_type} must contain key and value types"),
                 ))
             }
         } else {
@@ -150,24 +146,25 @@ fn generate_map_field(
     } else {
         Err(Error::new_spanned(
             field_type,
-            format!("{} must be a path type", map_type),
+            format!("{map_type} must be a path type"),
         ))
     }
 }
 
 fn generate_store_field(
-    field_name: &Option<syn::Ident>,
+    field_name: Option<&syn::Ident>,
     field_type: &Type,
     key_wrapper: &syn::Ident,
-    store_type: String,
+    store_type: &str,
 ) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
         let last_segment = type_path.path.segments.last().unwrap();
         if last_segment.ident == store_type {
             if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
                 let value_type = &generic_args.args[0];
-                let store_type_ident= format_ident!("{}", store_type);
-                let struct_field = quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
+                let store_type_ident = format_ident!("{}", store_type);
+                let struct_field =
+                    quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
                 let additional_item = quote! {
                     #[derive(Clone, Default)]
                     pub struct #key_wrapper;
@@ -182,7 +179,7 @@ fn generate_store_field(
             } else {
                 Err(Error::new_spanned(
                     field_type,
-                    format!("{} must contain value type", store_type),
+                    format!("{store_type} must contain value type"),
                 ))
             }
         } else {
@@ -194,7 +191,7 @@ fn generate_store_field(
     } else {
         Err(Error::new_spanned(
             field_type,
-            format!("{} must be a path type", store_type),
+            format!("{store_type} must be a path type"),
         ))
     }
 }

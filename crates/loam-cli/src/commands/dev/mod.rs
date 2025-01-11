@@ -148,7 +148,7 @@ impl Cmd {
         else {
             return Ok(());
         };
-        if current_env.network.run_locally.unwrap_or(false) {
+        if current_env.network.run_locally {
             eprintln!("Starting local Stellar Docker container...");
             docker::start_local_stellar().await.map_err(|e| {
                 eprintln!("Failed to start Stellar Docker container: {e:?}");
