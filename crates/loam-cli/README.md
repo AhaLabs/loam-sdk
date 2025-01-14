@@ -11,7 +11,7 @@ Loam CLI comes with three main commands:
 * `loam dev` - Monitors `contracts/*` and `environments.toml` for changes and re-runs `loam build` as needed. It also defaults to `LOAM_ENV=development`, rather than `production`.
 
 ## Getting started with `loam init`
-1. Install loam cli: `cargo install loam-cli`
+1. Install loam cli. We recommend using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) to install `cargo binstall loam-cli`
 1. To create a loam project, run `loam init <PROJECT_PATH>`. This will create a [Loam frontend](https://github.com/loambuild/template?tab=readme-ov-file) project at the provided `<PROJECT_PATH>`.
 1. In your project directory run the following commands to get up and running with a loam project with two example contracts:
 * `cp .env.example .env`
