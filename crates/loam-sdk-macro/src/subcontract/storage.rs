@@ -219,3 +219,24 @@ fn generate_data_key_variants(
         }
     }).collect()
 }
+
+#[cfg(test)]
+mod test {
+    use crate::util::format_snippet;
+
+    use super::*;
+
+    #[test]
+    fn test_generate_storage() {
+        let input: Item = syn::parse_quote! {
+            struct Foo {
+                bar: PersistentMap<String, u64>,
+                baz: PersistentStore<u64>,
+            }
+        };
+        let result = from_item(input).unwrap().to_string();
+        println!("{}", format_snippet(&result));
+    }
+
+
+}
