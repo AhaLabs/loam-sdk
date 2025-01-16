@@ -1,12 +1,15 @@
-use proc_macro2::TokenStream;
-use quote::{quote, format_ident};
-use syn::{Item, ItemStruct, Fields, Type, Result, Error};
 use heck::ToUpperCamelCase;
+use proc_macro2::TokenStream;
+use quote::{format_ident, quote};
+use syn::{Error, Fields, Item, ItemStruct, Result, Type};
 
 pub(crate) fn from_item(item: Item) -> Result<TokenStream> {
     match item {
         Item::Struct(item_struct) => generate_storage(item_struct),
-        _ => Err(Error::new_spanned(item, "loamstorage can only be applied to structs")),
+        _ => Err(Error::new_spanned(
+            item,
+            "loamstorage can only be applied to structs",
+        )),
     }
 }
 
@@ -14,7 +17,12 @@ fn generate_storage(item_struct: ItemStruct) -> Result<TokenStream> {
     let struct_name = &item_struct.ident;
     let fields = match &item_struct.fields {
         Fields::Named(fields) => &fields.named,
-        _ => return Err(Error::new_spanned(&item_struct, "Only named fields are supported")),
+        _ => {
+            return Err(Error::new_spanned(
+                &item_struct,
+                "Only named fields are supported",
+            ))
+        }
     };
 
     let (struct_fields, additional_items): (Vec<TokenStream>, Vec<TokenStream>) = fields
@@ -88,7 +96,12 @@ fn generate_storage(item_struct: ItemStruct) -> Result<TokenStream> {
     })
 }
 
-fn generate_map_field(field_name: &Option<syn::Ident>, field_type: &Type, key_wrapper: &syn::Ident, map_type: String) -> Result<(TokenStream, TokenStream)> {
+fn generate_map_field(
+    field_name: &Option<syn::Ident>,
+    field_type: &Type,
+    key_wrapper: &syn::Ident,
+    map_type: String,
+) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
         let args = &type_path.path.segments.last().unwrap().arguments;
         if let syn::PathArguments::AngleBracketed(generic_args) = args {
@@ -112,20 +125,36 @@ fn generate_map_field(field_name: &Option<syn::Ident>, field_type: &Type, key_wr
                         }
                     }
                 };
-                let struct_field = quote! { #field_name: #map_type<#key_type, #value_type, #key_wrapper> };
+                let struct_field =
+                    quote! { #field_name: #map_type<#key_type, #value_type, #key_wrapper> };
                 Ok((struct_field, additional_item))
             } else {
-                Err(Error::new_spanned(field_type, format!("{} must contain key and value types", map_type)))
+                Err(Error::new_spanned(
+                    field_type,
+                    format!("{} must contain key and value types", map_type),
+                ))
             }
         } else {
-            Err(Error::new_spanned(field_type, format!("{} must contain key and value types", map_type)))
+            Err(Error::new_spanned(
+                field_type,
+                format!("{} must contain key and value types", map_type),
+            ))
         }
     } else {
-        Err(Error::new_spanned(field_type, format!("{} must contain key and value types", map_type)))
+        Err(Error::new_spanned(
+            field_type,
+            format!("{} must contain key and value types", map_type),
+        ))
     }
 }
 
-fn generate_store_field(field_name: &Option<syn::Ident>, field_type: &Type, key_wrapper: &syn::Ident, store_type: String) -> Result<(TokenStream, TokenStream)> {
+fn generate_store_field(
+    field_name: &Option<syn::Ident>,
+    field_type: &Type,
+    key_wrapper: &syn::Ident,
+    store_type: String,
+    module_name: &Ident,
+) -> Result<(TokenStream, TokenStream)> {
     if let Type::Path(type_path) = field_type {
         let args = &type_path.path.segments.last().unwrap().arguments;
         if let syn::PathArguments::AngleBracketed(generic_args) = args {
@@ -144,14 +173,22 @@ fn generate_store_field(field_name: &Option<syn::Ident>, field_type: &Type, key_
             };
             Ok((struct_field, additional_item))
         } else {
-            Err(Error::new_spanned(field_type, format!("{} must contain value type", store_type)))
+            Err(Error::new_spanned(
+                field_type,
+                format!("{} must contain value type", store_type),
+            ))
         }
     } else {
-        Err(Error::new_spanned(field_type, format!("{} must contain value type", store_type)))
+        Err(Error::new_spanned(
+            field_type,
+            format!("{} must contain value type", store_type),
+        ))
     }
 }
 
-fn generate_data_key_variants(fields: &syn::punctuated::Punctuated<syn::Field, syn::Token![,]>) -> Result<Vec<TokenStream>> {
+fn generate_data_key_variants(
+    fields: &syn::punctuated::Punctuated<syn::Field, syn::Token![,]>,
+) -> Result<Vec<TokenStream>> {
     fields.iter().map(|field| {
         let field_name = &field.ident;
         let field_type = &field.ty;

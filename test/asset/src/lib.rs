@@ -1,7 +1,8 @@
 #![no_std]
 use loam_sdk::{
     loamstorage,
-    soroban_sdk::{self, env, Address, InstanceStore, LoamKey, PersistentMap, String},
+    soroban_sdk::{self, env, Address, InstanceStore, Lazy, LoamKey, PersistentMap, String},
+    subcontract,
 };
 
 mod types;
@@ -31,4 +32,21 @@ impl Token {
         token.symbol.set(&symbol);
         token.decimals.set(&decimals);
     }
+}
+
+impl IsAToken for Token {
+    fn init(&mut self, name: String, symbol: String, decimals: u32) {
+        Self::init(name, symbol, decimals);
+    }
+
+    fn name(&self) -> Option<String> {
+        self.name.get()
+    }
+}
+
+#[subcontract]
+pub trait IsAToken {
+    fn init(&mut self, name: String, symbol: String, decimals: u32);
+
+    fn name(&self) -> Option<String>;
 }

@@ -1,4 +1,4 @@
-use heck::ToUpperCamelCase;
+use heck::{ToSnakeCase, ToUpperCamelCase};
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{Error, Fields, FieldsNamed, Ident, Item, ItemStruct, Result, Type};
@@ -21,6 +21,7 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
             "Only named fields are supported",
         ));
     };
+    let module_name = format_ident!("{}_keys__", struct_name.to_string().to_snake_case());
 
     let (struct_fields, additional_items): (Vec<TokenStream>, Vec<TokenStream>) = fields
         .iter()
@@ -36,10 +37,10 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
 
             match last_segment.ident.to_string().as_str() {
                 ident @ ("PersistentMap" | "InstanceMap" | "TempMap") => {
-                    generate_map_field(field_name, field_type, &key_wrapper, ident)
+                    generate_map_field(field_name, field_type, &key_wrapper, ident, &module_name)
                 },
                 ident @ ("PersistentStore" | "InstanceStore" | "TempStore") => {
-                    generate_store_field(field_name, field_type, &key_wrapper, ident)
+                    generate_store_field(field_name, field_type, &key_wrapper, ident, &module_name)
                 },
                 _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
             }
@@ -77,8 +78,10 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
 
     Ok(quote! {
         #main_struct
-
-        #additional_items
+        mod #module_name {
+            use super::*;
+            #additional_items
+        }
     })
 }
 
@@ -87,6 +90,7 @@ fn generate_map_field(
     field_type: &Type,
     key_wrapper: &syn::Ident,
     map_type: &str,
+    module_name: &Ident,
 ) -> Result<(TokenStream, TokenStream)> {
     let Type::Path(type_path) = field_type else {
         return Err(Error::new_spanned(
@@ -135,7 +139,7 @@ fn generate_map_field(
     };
     let map_type_ident = format_ident!("{}", map_type);
     let struct_field =
-        quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
+        quote! { #field_name: #map_type_ident<#key_type, #value_type, #module_name::#key_wrapper> };
     Ok((struct_field, additional_item))
 }
 
@@ -144,6 +148,7 @@ fn generate_store_field(
     field_type: &Type,
     key_wrapper: &syn::Ident,
     store_type: &str,
+    module_name: &Ident,
 ) -> Result<(TokenStream, TokenStream)> {
     let Type::Path(type_path) = field_type else {
         return Err(Error::new_spanned(
@@ -168,7 +173,8 @@ fn generate_store_field(
     let enum_case_name = field_to_enum_case(field_name);
     let value_type = &generic_args.args[0];
     let store_type_ident = format_ident!("{}", store_type);
-    let struct_field = quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
+    let struct_field =
+        quote! { #field_name: #store_type_ident<#value_type, #module_name::#key_wrapper> };
     let additional_item = quote! {
         #[derive(Clone, Default)]
         pub struct #key_wrapper;
@@ -241,8 +247,8 @@ mod test {
         let expected = quote! {
         #[derive(Clone, Default)]
         pub struct Foo {
-            bar: PersistentMap<String, u64, BarKey>,
-            baz: PersistentStore<u64, BazKey>,
+            bar: PersistentMap<String, u64, foo_keys__::BarKey>,
+            baz: PersistentStore<u64, foo_keys__::BazKey>,
         }
         impl soroban_sdk::Lazy for Foo {
             fn get_lazy() -> Option<Self> {
@@ -250,31 +256,35 @@ mod test {
             }
             fn set_lazy(self) {}
         }
-        #[derive(Clone)]
-        #[soroban_sdk::contracttype]
-        pub enum DataKey {
-            Bar(String),
-            Baz,
-        }
-        #[derive(Clone)]
-        pub struct BarKey(String);
-        impl From<String> for BarKey {
-            fn from(key: String) -> Self {
-                Self(key)
+        mod foo_keys__ {
+            use super::*;
+            #[derive(Clone)]
+            #[soroban_sdk::contracttype]
+            pub enum DataKey {
+                Bar(String),
+                Baz,
+            }
+            #[derive(Clone)]
+            pub struct BarKey(String);
+            impl From<String> for BarKey {
+                fn from(key: String) -> Self {
+                    Self(key)
+                }
+            }
+            impl LoamKey for BarKey {
+                fn to_key(&self) -> soroban_sdk::Val {
+                    soroban_sdk::IntoVal::into_val(&DataKey::Bar(self.0.clone()), env())
+                }
+            }
+            #[derive(Clone, Default)]
+            pub struct BazKey;
+            impl LoamKey for BazKey {
+                fn to_key(&self) -> soroban_sdk::Val {
+                    soroban_sdk::IntoVal::into_val(&DataKey::Baz, env())
+                }
             }
         }
-        impl LoamKey for BarKey {
-            fn to_key(&self) -> soroban_sdk::Val {
-                soroban_sdk::IntoVal::into_val(&DataKey::Bar(self.0.clone()), env())
-            }
-        }
-        #[derive(Clone, Default)]
-        pub struct BazKey;
-        impl LoamKey for BazKey {
-            fn to_key(&self) -> soroban_sdk::Val {
-                soroban_sdk::IntoVal::into_val(&DataKey::Baz, env())
-            }
-        }
+
                 };
         equal_tokens(&expected, &generated);
     }
