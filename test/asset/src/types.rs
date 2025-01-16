@@ -1,6 +1,5 @@
 use loam_sdk::soroban_sdk::{self, contracttype, Address};
 
-
 #[contracttype]
 #[derive(Clone)]
 pub struct Txn(pub Address, pub Address);
