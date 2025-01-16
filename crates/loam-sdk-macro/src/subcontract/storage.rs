@@ -27,21 +27,21 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
         .map(|field| {
             let field_name = field.ident.as_ref();
             let field_type = &field.ty;
-            if let Type::Path(type_path) = field_type {
-                let last_segment = type_path.path.segments.last().unwrap();
-                let key_wrapper = format_ident!("{}Key", field_name.as_ref().unwrap().to_string().to_upper_camel_case());
+            let Type::Path(type_path) = field_type else {
+                return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore"));
+            };
 
-                match last_segment.ident.to_string().as_str() {
-                    ident @ ("PersistentMap" | "InstanceMap" | "TempMap") => {
-                        generate_map_field(field_name, field_type, &key_wrapper, ident)
-                    },
-                    ident @ ("PersistentStore" | "InstanceStore" | "TempStore") => {
-                        generate_store_field(field_name, field_type, &key_wrapper, ident)
-                    },
-                    _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
-                }
-            } else {
-                Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore"))
+            let last_segment = type_path.path.segments.last().unwrap();
+            let key_wrapper = format_ident!("{}Key", field_name.as_ref().unwrap().to_string().to_upper_camel_case());
+
+            match last_segment.ident.to_string().as_str() {
+                ident @ ("PersistentMap" | "InstanceMap" | "TempMap") => {
+                    generate_map_field(field_name, field_type, &key_wrapper, ident)
+                },
+                ident @ ("PersistentStore" | "InstanceStore" | "TempStore") => {
+                    generate_store_field(field_name, field_type, &key_wrapper, ident)
+                },
+                _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
             }
         })
         .collect::<Result<Vec<_>>>()?
@@ -88,58 +88,55 @@ fn generate_map_field(
     key_wrapper: &syn::Ident,
     map_type: &str,
 ) -> Result<(TokenStream, TokenStream)> {
-    if let Type::Path(type_path) = field_type {
-        let last_segment = type_path.path.segments.last().unwrap();
-        if last_segment.ident == map_type {
-            if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
-                if generic_args.args.len() == 2 {
-                    let enum_case_name = field_to_enum_case(field_name);
-                    let key_type = &generic_args.args[0];
-                    let value_type = &generic_args.args[1];
-
-                    let additional_item = quote! {
-                        #[derive(Clone)]
-                        pub struct #key_wrapper(#key_type);
-
-                        impl From<#key_type> for #key_wrapper {
-                            fn from(key: #key_type) -> Self {
-                                Self(key)
-                            }
-                        }
-
-                        impl LoamKey for #key_wrapper {
-                            fn to_key(&self) -> soroban_sdk::Val {
-                                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name(self.0.clone()),env())
-                            }
-                        }
-                    };
-                    let map_type_ident = format_ident!("{}", map_type);
-                    let struct_field = quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
-                    Ok((struct_field, additional_item))
-                } else {
-                    Err(Error::new_spanned(
-                        field_type,
-                        format!("{map_type} must contain key and value types"),
-                    ))
-                }
-            } else {
-                Err(Error::new_spanned(
-                    field_type,
-                    format!("{map_type} must contain key and value types"),
-                ))
-            }
-        } else {
-            Err(Error::new_spanned(
-                field_type,
-                format!("Expected {}, found {}", map_type, last_segment.ident),
-            ))
-        }
-    } else {
-        Err(Error::new_spanned(
+    let Type::Path(type_path) = field_type else {
+        return Err(Error::new_spanned(
             field_type,
             format!("{map_type} must be a path type"),
-        ))
+        ));
+    };
+    let last_segment = type_path.path.segments.last().unwrap();
+    if last_segment.ident != map_type {
+        return Err(Error::new_spanned(
+            field_type,
+            format!("Expected {}, found {}", map_type, last_segment.ident),
+        ));
     }
+    let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments else {
+        return Err(Error::new_spanned(
+            field_type,
+            format!("{map_type} must contain key and value types"),
+        ));
+    };
+    if generic_args.args.len() != 2 {
+        return Err(Error::new_spanned(
+            field_type,
+            format!("{map_type} must contain key and value types"),
+        ));
+    }
+    let enum_case_name = field_to_enum_case(field_name);
+    let key_type = &generic_args.args[0];
+    let value_type = &generic_args.args[1];
+
+    let additional_item = quote! {
+        #[derive(Clone)]
+        pub struct #key_wrapper(#key_type);
+
+        impl From<#key_type> for #key_wrapper {
+            fn from(key: #key_type) -> Self {
+                Self(key)
+            }
+        }
+
+        impl LoamKey for #key_wrapper {
+            fn to_key(&self) -> soroban_sdk::Val {
+                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name(self.0.clone()),env())
+            }
+        }
+    };
+    let map_type_ident = format_ident!("{}", map_type);
+    let struct_field =
+        quote! { #field_name: #map_type_ident<#key_type, #value_type, #key_wrapper> };
+    Ok((struct_field, additional_item))
 }
 
 fn generate_store_field(
@@ -148,44 +145,41 @@ fn generate_store_field(
     key_wrapper: &syn::Ident,
     store_type: &str,
 ) -> Result<(TokenStream, TokenStream)> {
-    if let Type::Path(type_path) = field_type {
-        let last_segment = type_path.path.segments.last().unwrap();
-        if last_segment.ident == store_type {
-            if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
-                let enum_case_name = field_to_enum_case(field_name);
-                let value_type = &generic_args.args[0];
-                let store_type_ident = format_ident!("{}", store_type);
-                let struct_field =
-                    quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
-                let additional_item = quote! {
-                    #[derive(Clone, Default)]
-                    pub struct #key_wrapper;
-
-                    impl LoamKey for #key_wrapper {
-                        fn to_key(&self) -> soroban_sdk::Val {
-                            soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name, env())
-                        }
-                    }
-                };
-                Ok((struct_field, additional_item))
-            } else {
-                Err(Error::new_spanned(
-                    field_type,
-                    format!("{store_type} must contain value type"),
-                ))
-            }
-        } else {
-            Err(Error::new_spanned(
-                field_type,
-                format!("Expected {}, found {}", store_type, last_segment.ident),
-            ))
-        }
-    } else {
-        Err(Error::new_spanned(
+    let Type::Path(type_path) = field_type else {
+        return Err(Error::new_spanned(
             field_type,
             format!("{store_type} must be a path type"),
-        ))
+        ));
+    };
+    let last_segment = type_path.path.segments.last().unwrap();
+    if last_segment.ident != store_type {
+        return Err(Error::new_spanned(
+            field_type,
+            format!("Expected {}, found {}", store_type, last_segment.ident),
+        ));
     }
+    let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments else {
+        return Err(Error::new_spanned(
+            field_type,
+            format!("{store_type} must contain value type"),
+        ));
+    };
+
+    let enum_case_name = field_to_enum_case(field_name);
+    let value_type = &generic_args.args[0];
+    let store_type_ident = format_ident!("{}", store_type);
+    let struct_field = quote! { #field_name: #store_type_ident<#value_type, #key_wrapper> };
+    let additional_item = quote! {
+        #[derive(Clone, Default)]
+        pub struct #key_wrapper;
+
+        impl LoamKey for #key_wrapper {
+            fn to_key(&self) -> soroban_sdk::Val {
+                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name, env())
+            }
+        }
+    };
+    Ok((struct_field, additional_item))
 }
 
 fn field_to_enum_case(field_name: Option<&Ident>) -> Option<Ident> {
@@ -203,29 +197,28 @@ fn generate_data_key_variants(
         let field_name = field_to_enum_case(field_name);
         let field_type = &field.ty;
 
-        if let Type::Path(type_path) = field_type {
-            let last_segment = type_path.path.segments.last().unwrap();
-            match last_segment.ident.to_string().as_str() {
-                "PersistentMap" | "InstanceMap" | "TempMap" => {
-                    let args = &last_segment.arguments;
-                    if let syn::PathArguments::AngleBracketed(generic_args) = args {
-                        if generic_args.args.len() == 2 {
-                            let key_type = &generic_args.args[0];
-                            Ok(quote! { #field_name(#key_type) })
-                        } else {
-                            Err(Error::new_spanned(field_type, "Map must contain key and value types"))
-                        }
+        let Type::Path(type_path) = field_type else {
+            return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore"));
+        };
+        let last_segment = type_path.path.segments.last().unwrap();
+        match last_segment.ident.to_string().as_str() {
+            "PersistentMap" | "InstanceMap" | "TempMap" => {
+                let args = &last_segment.arguments;
+                if let syn::PathArguments::AngleBracketed(generic_args) = args {
+                    if generic_args.args.len() == 2 {
+                        let key_type = &generic_args.args[0];
+                        Ok(quote! { #field_name(#key_type) })
                     } else {
                         Err(Error::new_spanned(field_type, "Map must contain key and value types"))
                     }
-                },
-                "PersistentStore" | "InstanceStore" | "TempStore" => {
-                    Ok(quote! { #field_name })
-                },
-                _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
-            }
-        } else {
-            Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore"))
+                } else {
+                    Err(Error::new_spanned(field_type, "Map must contain key and value types"))
+                }
+            },
+            "PersistentStore" | "InstanceStore" | "TempStore" => {
+                Ok(quote! { #field_name })
+            },
+            _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TempMap, PersistentStore, InstanceStore, or TempStore")),
         }
     }).collect()
 }
@@ -245,10 +238,8 @@ mod test {
             }
         };
         let generated = from_item(input).unwrap();
-        // let result = format_snippet(&generated.to_string());
-
         let expected = quote! {
-                    #[derive(Clone, Default)]
+        #[derive(Clone, Default)]
         pub struct Foo {
             bar: PersistentMap<String, u64, BarKey>,
             baz: PersistentStore<u64, BazKey>,
