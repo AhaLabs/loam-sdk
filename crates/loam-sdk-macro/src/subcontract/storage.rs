@@ -48,20 +48,10 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
         .into_iter()
         .unzip();
 
-    let field_names = fields.iter().map(|f| &f.ident);
-
     let main_struct = quote! {
         #[derive(Clone, Default)]
         pub struct #struct_name {
             #(#struct_fields,)*
-        }
-
-        impl #struct_name {
-            pub fn new() -> Self {
-                Self {
-                    #(#field_names: Default::default(),)*
-                }
-            }
         }
 
         impl Lazy for #struct_name {

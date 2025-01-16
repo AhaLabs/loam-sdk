@@ -39,13 +39,18 @@ pub(crate) fn from_item(item: Item) -> Result<TokenStream, syn::Error> {
     })
 }
 
-#[test]
-fn test_into_key() {
-    let input: Item = syn::parse_quote! {
-       struct Foo;
-    };
-    let result = from_item(input).unwrap().to_string();
-    println!("{result}");
-    let impl_ = syn::parse_str::<syn::ItemImpl>(result.as_str()).unwrap();
-    println!("{impl_:#?}");
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_into_key() {
+        let input: Item = syn::parse_quote! {
+           struct Foo;
+        };
+        let result = from_item(input).unwrap().to_string();
+        println!("{result}");
+        let impl_ = syn::parse_str::<syn::ItemImpl>(result.as_str()).unwrap();
+        println!("{impl_:#?}");
+    }
 }
