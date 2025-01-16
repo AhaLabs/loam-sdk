@@ -1,7 +1,7 @@
 use heck::ToUpperCamelCase;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{Error, Fields, FieldsNamed, Item, ItemStruct, Result, Type};
+use syn::{Error, Fields, FieldsNamed, Ident, Item, ItemStruct, Result, Type};
 
 pub(crate) fn from_item(item: Item) -> Result<TokenStream> {
     match item {
@@ -93,6 +93,7 @@ fn generate_map_field(
         if last_segment.ident == map_type {
             if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
                 if generic_args.args.len() == 2 {
+                    let enum_case_name = field_to_enum_case(field_name);
                     let key_type = &generic_args.args[0];
                     let value_type = &generic_args.args[1];
 
@@ -108,7 +109,7 @@ fn generate_map_field(
 
                         impl LoamKey for #key_wrapper {
                             fn to_key(&self) -> Val {
-                                DataKey::#field_name(self.0.clone()).into_val(env())
+                                DataKey::#enum_case_name(self.0.clone()).into_val(env())
                             }
                         }
                     };
@@ -151,6 +152,7 @@ fn generate_store_field(
         let last_segment = type_path.path.segments.last().unwrap();
         if last_segment.ident == store_type {
             if let syn::PathArguments::AngleBracketed(generic_args) = &last_segment.arguments {
+                let enum_case_name = field_to_enum_case(field_name);
                 let value_type = &generic_args.args[0];
                 let store_type_ident = format_ident!("{}", store_type);
                 let struct_field =
@@ -161,7 +163,7 @@ fn generate_store_field(
 
                     impl LoamKey for #key_wrapper {
                         fn to_key(&self) -> Val {
-                            DataKey::#field_name.into_val(env())
+                            DataKey::#enum_case_name.into_val(env())
                         }
                     }
                 };
@@ -186,11 +188,19 @@ fn generate_store_field(
     }
 }
 
+fn field_to_enum_case(field_name: Option<&Ident>) -> Option<Ident> {
+    field_name.map(|name| {
+        let enum_case = name.to_string().to_upper_camel_case();
+        syn::Ident::new(&enum_case, name.span())
+    })
+}
+
 fn generate_data_key_variants(
     fields: &syn::punctuated::Punctuated<syn::Field, syn::Token![,]>,
 ) -> Result<Vec<TokenStream>> {
     fields.iter().map(|field| {
-        let field_name = &field.ident;
+        let field_name = field.ident.as_ref();
+        let field_name = field_to_enum_case(field_name);
         let field_type = &field.ty;
 
         if let Type::Path(type_path) = field_type {
@@ -222,7 +232,7 @@ fn generate_data_key_variants(
 
 #[cfg(test)]
 mod test {
-    use crate::util::format_snippet;
+    use crate::util::equal_tokens;
 
     use super::*;
 
@@ -234,9 +244,47 @@ mod test {
                 baz: PersistentStore<u64>,
             }
         };
-        let result = from_item(input).unwrap().to_string();
-        println!("{}", format_snippet(&result));
+        let generated = from_item(input).unwrap();
+        // let result = format_snippet(&generated.to_string());
+
+        let expected = quote! {
+            #[derive(Clone, Default)]
+            pub struct Foo {
+                bar: PersistentMap<String, u64, BarKey>,
+                baz: PersistentStore<u64, BazKey>,
+            }
+            impl Lazy for Foo {
+                fn get_lazy() -> Option<Self> {
+                    Some(Foo::default())
+                }
+                fn set_lazy(self) {}
+            }
+            #[derive(Clone)]
+            #[contracttype]
+            pub enum DataKey {
+                Bar(String),
+                Baz,
+            }
+            #[derive(Clone)]
+            pub struct BarKey(String);
+            impl From<String> for BarKey {
+                fn from(key: String) -> Self {
+                    Self(key)
+                }
+            }
+            impl LoamKey for BarKey {
+                fn to_key(&self) -> Val {
+                    DataKey::Bar(self.0.clone()).into_val(env())
+                }
+            }
+            #[derive(Clone, Default)]
+            pub struct BazKey;
+            impl LoamKey for BazKey {
+                fn to_key(&self) -> Val {
+                    DataKey::Baz.into_val(env())
+                }
+            }
+        };
+        equal_tokens(&expected, &generated);
     }
-
-
 }
