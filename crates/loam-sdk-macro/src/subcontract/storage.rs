@@ -248,43 +248,43 @@ mod test {
         // let result = format_snippet(&generated.to_string());
 
         let expected = quote! {
-            #[derive(Clone, Default)]
-            pub struct Foo {
-                bar: PersistentMap<String, u64, BarKey>,
-                baz: PersistentStore<u64, BazKey>,
+                    #[derive(Clone, Default)]
+        pub struct Foo {
+            bar: PersistentMap<String, u64, BarKey>,
+            baz: PersistentStore<u64, BazKey>,
+        }
+        impl soroban_sdk::Lazy for Foo {
+            fn get_lazy() -> Option<Self> {
+                Some(Foo::default())
             }
-            impl Lazy for Foo {
-                fn get_lazy() -> Option<Self> {
-                    Some(Foo::default())
-                }
-                fn set_lazy(self) {}
+            fn set_lazy(self) {}
+        }
+        #[derive(Clone)]
+        #[soroban_sdk::contracttype]
+        pub enum DataKey {
+            Bar(String),
+            Baz,
+        }
+        #[derive(Clone)]
+        pub struct BarKey(String);
+        impl From<String> for BarKey {
+            fn from(key: String) -> Self {
+                Self(key)
             }
-            #[derive(Clone)]
-            #[contracttype]
-            pub enum DataKey {
-                Bar(String),
-                Baz,
+        }
+        impl LoamKey for BarKey {
+            fn to_key(&self) -> soroban_sdk::Val {
+                soroban_sdk::IntoVal::into_val(&DataKey::Bar(self.0.clone()), env())
             }
-            #[derive(Clone)]
-            pub struct BarKey(String);
-            impl From<String> for BarKey {
-                fn from(key: String) -> Self {
-                    Self(key)
-                }
+        }
+        #[derive(Clone, Default)]
+        pub struct BazKey;
+        impl LoamKey for BazKey {
+            fn to_key(&self) -> soroban_sdk::Val {
+                soroban_sdk::IntoVal::into_val(&DataKey::Baz, env())
             }
-            impl LoamKey for BarKey {
-                fn to_key(&self) -> Val {
-                    DataKey::Bar(self.0.clone()).into_val(env())
-                }
-            }
-            #[derive(Clone, Default)]
-            pub struct BazKey;
-            impl LoamKey for BazKey {
-                fn to_key(&self) -> Val {
-                    DataKey::Baz.into_val(env())
-                }
-            }
-        };
+        }
+                };
         equal_tokens(&expected, &generated);
     }
 }

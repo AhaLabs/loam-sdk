@@ -1,10 +1,11 @@
 #![no_std]
-use loam_sdk::{loamstorage, soroban_sdk::{self, env, Address, InstanceStore, LoamKey, PersistentMap, String}};
-
-
+use loam_sdk::{
+    loamstorage,
+    soroban_sdk::{self, env, Address, InstanceStore, LoamKey, PersistentMap, String},
+};
 
 mod types;
-use types::{Txn, Allowance};
+use types::{Allowance, Txn};
 
 #[loamstorage]
 #[derive(Default)]
@@ -21,15 +22,10 @@ pub struct Token {
     symbol: InstanceStore<String>,
     /// Number of decimal places for token amounts
     decimals: InstanceStore<u32>,
-    
 }
 
 impl Token {
-    pub fn init(
-        name: String,
-        symbol: String,
-        decimals: u32,
-    ) {
+    pub fn init(name: String, symbol: String, decimals: u32) {
         let mut token = Token::default();
         token.name.set(&name);
         token.symbol.set(&symbol);
