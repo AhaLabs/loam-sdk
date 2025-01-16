@@ -54,7 +54,7 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
             #(#struct_fields,)*
         }
 
-        impl Lazy for #struct_name {
+        impl soroban_sdk::Lazy for #struct_name {
             fn get_lazy() -> Option<Self> {
                 Some(#struct_name::default())
             }
@@ -67,7 +67,7 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
 
     let additional_items = quote! {
         #[derive(Clone)]
-        #[contracttype]
+        #[soroban_sdk::contracttype]
         pub enum DataKey {
             #(#data_key_variants,)*
         }
@@ -108,8 +108,8 @@ fn generate_map_field(
                         }
 
                         impl LoamKey for #key_wrapper {
-                            fn to_key(&self) -> Val {
-                                DataKey::#enum_case_name(self.0.clone()).into_val(env())
+                            fn to_key(&self) -> soroban_sdk::Val {
+                                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name(self.0.clone()),env())
                             }
                         }
                     };
@@ -162,8 +162,8 @@ fn generate_store_field(
                     pub struct #key_wrapper;
 
                     impl LoamKey for #key_wrapper {
-                        fn to_key(&self) -> Val {
-                            DataKey::#enum_case_name.into_val(env())
+                        fn to_key(&self) -> soroban_sdk::Val {
+                            soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name, env())
                         }
                     }
                 };
