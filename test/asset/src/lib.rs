@@ -1,12 +1,15 @@
 #![no_std]
 use loam_sdk::{
-    loamstorage,
-    soroban_sdk::{self, env, Address, InstanceStore, Lazy, LoamKey, PersistentMap, String},
-    subcontract,
+    derive_contract, loamstorage, soroban_sdk::{self, env, Address, InstanceStore, Lazy, LoamKey, PersistentMap, String}, subcontract
 };
 
 mod types;
+use loam_subcontract_core::{Admin, Core};
 use types::{Allowance, Txn};
+
+
+#[derive_contract(Core(Admin), AToken(Token))]
+pub struct Contract;
 
 #[loamstorage]
 #[derive(Default)]
