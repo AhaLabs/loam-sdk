@@ -27,14 +27,6 @@ where
     W: LoamKey,
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
-    pub fn new() -> Self {
-        Self {
-            k: PhantomData,
-            v: PhantomData,
-            w: PhantomData,
-        }
-    }
-
     pub fn get(&self, key: K) -> Option<V> {
         let w: W = key.into();
         let k = w.to_key();
@@ -88,7 +80,11 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+            w: PhantomData,
+        }
     }
 }
 
@@ -107,13 +103,6 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
 {
-    pub fn new() -> Self {
-        Self {
-            v: PhantomData,
-            k: PhantomData,
-        }
-    }
-
     pub fn get(&self) -> Option<V> {
         let key = K::default().to_key();
         env().storage().persistent().get(&key)
@@ -159,7 +148,10 @@ where
     K: LoamKey + Default,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+        }
     }
 }
 
@@ -181,14 +173,6 @@ where
     W: LoamKey,
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
-    pub fn new() -> Self {
-        Self {
-            k: PhantomData,
-            v: PhantomData,
-            w: PhantomData,
-        }
-    }
-
     pub fn get(&self, key: K) -> Option<V> {
         let w: W = key.into();
         let k = w.to_key();
@@ -248,14 +232,6 @@ where
     W: LoamKey,
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
-    pub fn new() -> Self {
-        Self {
-            k: PhantomData,
-            v: PhantomData,
-            w: PhantomData,
-        }
-    }
-
     pub fn get(&self, key: K) -> Option<V> {
         let w: W = key.into();
         let k = w.to_key();
@@ -309,7 +285,11 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+            w: PhantomData,
+        }
     }
 }
 
@@ -320,7 +300,11 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+            w: PhantomData,
+        }
     }
 }
 
@@ -339,13 +323,6 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
 {
-    pub fn new() -> Self {
-        Self {
-            v: PhantomData,
-            k: PhantomData,
-        }
-    }
-
     pub fn get(&self) -> Option<V> {
         let key = K::default().to_key();
         env().storage().instance().get(&key)
@@ -396,13 +373,6 @@ where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
 {
-    pub fn new() -> Self {
-        Self {
-            v: PhantomData,
-            k: PhantomData,
-        }
-    }
-
     pub fn get(&self) -> Option<V> {
         let key = K::default().to_key();
         env().storage().temporary().get(&key)
@@ -448,7 +418,10 @@ where
     K: LoamKey + Default,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+        }
     }
 }
 
@@ -458,6 +431,9 @@ where
     K: LoamKey + Default,
 {
     fn default() -> Self {
-        Self::new()
+        Self {
+            v: PhantomData,
+            k: PhantomData,
+        }
     }
 }
