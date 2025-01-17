@@ -1,0 +1,23 @@
+[package]
+name = "asset-two"
+description = "Simple asset"
+version = "0.0.0"
+authors = ["Aha Labs <help@ahalabs.dev>"]
+license = "Apache-2.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
+loam-subcontract-core = { workspace = true }
+loam-subcontract-ft = { workspace = true }
+
+[dev-dependencies]
+loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
+
+[package.metadata.loam]
+contract = true

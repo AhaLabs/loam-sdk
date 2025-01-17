@@ -45,6 +45,11 @@ impl IsAToken for Token {
     fn name(&self) -> Option<String> {
         self.name.get()
     }
+
+    fn set_balance(&mut self, address: Address, amount: i128) {
+        address.require_auth();
+        self.balances.set(address, &amount);
+    }
 }
 
 #[subcontract]
@@ -52,4 +57,6 @@ pub trait IsAToken {
     fn init(&mut self, name: String, symbol: String, decimals: u32);
 
     fn name(&self) -> Option<String>;
+
+    fn set_balance(&mut self, address: Address, amount: i128);
 }
