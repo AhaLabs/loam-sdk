@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 #![no_std]
 use loam_sdk::{
     derive_contract,

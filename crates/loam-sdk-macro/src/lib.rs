@@ -26,6 +26,7 @@ pub fn subcontract(_: TokenStream, item: TokenStream) -> TokenStream {
     subcontract::generate(&parsed).into()
 }
 
+#[deprecated(since = "0.8.6", note = "Please use #[loamstorage] instead.")]
 #[proc_macro_derive(IntoKey)]
 pub fn into_key(item: TokenStream) -> TokenStream {
     syn::parse::<Item>(item)
