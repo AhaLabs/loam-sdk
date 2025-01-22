@@ -1,12 +1,13 @@
 #![no_std]
 use loam_sdk::{
-    derive_contract, soroban_sdk::{self, contracttype, env, Address, Lazy, Map,String}, subcontract, IntoKey
+    derive_contract,
+    soroban_sdk::{self, contracttype, env, Address, Lazy, Map, String},
+    subcontract, IntoKey,
 };
 
 mod types;
 use loam_subcontract_core::{Admin, Core};
 use types::{Allowance, Txn};
-
 
 #[derive_contract(Core(Admin), AToken(Token))]
 pub struct Contract;
@@ -31,11 +32,11 @@ pub struct Token {
 impl Default for Token {
     fn default() -> Self {
         Token {
-            name: String::from_str(env(),""),
+            name: String::from_str(env(), ""),
             balances: Map::new(env()),
             allowances: Map::new(env()),
             authorized: Map::new(env()),
-            symbol: String::from_str(env(),""),
+            symbol: String::from_str(env(), ""),
             decimals: 0,
         }
     }
@@ -51,7 +52,6 @@ impl Token {
             symbol,
             decimals,
         };
-        
     }
 }
 
