@@ -215,7 +215,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct TempMap<K, V, W = K>
+pub struct TemporaryMap<K, V, W = K>
 where
     K: Into<W>,
     W: LoamKey,
@@ -226,7 +226,7 @@ where
     w: PhantomData<W>,
 }
 
-impl<K, V, W> TempMap<K, V, W>
+impl<K, V, W> TemporaryMap<K, V, W>
 where
     K: Into<W>,
     W: LoamKey,
@@ -293,7 +293,7 @@ where
     }
 }
 
-impl<K, V, W> Default for TempMap<K, V, W>
+impl<K, V, W> Default for TemporaryMap<K, V, W>
 where
     K: Into<W>,
     W: LoamKey,
@@ -359,7 +359,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct TempStore<V, K>
+pub struct TemporaryStore<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -368,7 +368,7 @@ where
     k: PhantomData<K>,
 }
 
-impl<V, K> TempStore<V, K>
+impl<V, K> TemporaryStore<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -425,7 +425,7 @@ where
     }
 }
 
-impl<V, K> Default for TempStore<V, K>
+impl<V, K> Default for TemporaryStore<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,

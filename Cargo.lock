@@ -288,6 +288,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "asset-two"
+version = "0.0.0"
+dependencies = [
+ "loam-sdk",
+ "loam-subcontract-core",
+ "loam-subcontract-ft",
+]
+
+[[package]]
 name = "async-compression"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
