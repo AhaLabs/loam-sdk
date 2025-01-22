@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6](https://github.com/loambuild/loam/compare/loam-sdk-macro-v0.8.5...loam-sdk-macro-v0.8.6) - 2025-01-22
+
+### Added
+
+- loam storage (#177)
+
+### Other
+
+- upgrade to stellar-cli v22.0 ([#173](https://github.com/loambuild/loam/pull/173))
+
 ## [0.8.5](https://github.com/loambuild/loam/compare/loam-sdk-macro-v0.8.4...loam-sdk-macro-v0.8.5) - 2024-09-30
 
 ### Fixed
