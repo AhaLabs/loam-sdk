@@ -19,3 +19,7 @@ loam-subcontract-core = { workspace = true }
 
 [package.metadata.loam]
 contract = true
+
+[features]
+default = ["used_linker"]
+used_linker = []

@@ -15,7 +15,7 @@ Build **composable**, **upgradeable**, **secure** Smart Contracts.
 
 # Subcontracts
 
-A subcontract is a type that implements the `loamstorage` trait, which is used for lazily loading and storing the type.
+A subcontract is a type that implements the `Lazy` trait, which is used for lazily loading and storing the type. Use the `loamstorage` macro along with special `loam` storage types - `PersistentMap`, `InstanceMap`, `TemporaryMap` (for key-value pair storage); `PersistentItem`, `InstanceItem`, `TemporaryItem` (for singleton storage). These map to `soroban` `Persistent`, `Instance`, and `Temporary` storage types.
 
 ## Creating  Subcontracts
 
@@ -32,6 +32,7 @@ pub struct Token {
 
 This generates an implementation to access the `Persistent` and `Instance` storage 
 mechanisms of `env.storage()`. These can be accessed via `balance.set`, `balance.get`, etc.
+Time to live can be extended via `balance.extend_ttl`. 
 
 ## External API
 
