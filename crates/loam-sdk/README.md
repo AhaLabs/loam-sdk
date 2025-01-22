@@ -26,7 +26,7 @@ Here's an example of how to create a subcontract:
 #[derive(Default)]
 pub struct Token { 
     balance: PersistentMap<Address, i128>,
-    symbol: InstanceStore<String>,
+    symbol: InstanceItem<String>,
 };
 ```
 

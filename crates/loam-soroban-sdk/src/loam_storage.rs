@@ -89,7 +89,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct PersistentStore<V, K>
+pub struct PersistentItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -98,7 +98,7 @@ where
     k: PhantomData<K>,
 }
 
-impl<V, K> PersistentStore<V, K>
+impl<V, K> PersistentItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -142,7 +142,7 @@ where
     }
 }
 
-impl<V, K> Default for PersistentStore<V, K>
+impl<V, K> Default for PersistentItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -309,7 +309,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct InstanceStore<V, K>
+pub struct InstanceItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -318,7 +318,7 @@ where
     k: PhantomData<K>,
 }
 
-impl<V, K> InstanceStore<V, K>
+impl<V, K> InstanceItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -359,7 +359,7 @@ where
 }
 
 #[derive(Clone)]
-pub struct TemporaryStore<V, K>
+pub struct TemporaryItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -368,7 +368,7 @@ where
     k: PhantomData<K>,
 }
 
-impl<V, K> TemporaryStore<V, K>
+impl<V, K> TemporaryItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -412,7 +412,7 @@ where
     }
 }
 
-impl<V, K> Default for InstanceStore<V, K>
+impl<V, K> Default for InstanceItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,
@@ -425,7 +425,7 @@ where
     }
 }
 
-impl<V, K> Default for TemporaryStore<V, K>
+impl<V, K> Default for TemporaryItem<V, K>
 where
     V: IntoVal<Env, Val> + TryFromVal<Env, Val>,
     K: LoamKey + Default,

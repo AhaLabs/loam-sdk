@@ -1,7 +1,7 @@
 #![no_std]
 use loam_sdk::{
     derive_contract, loamstorage,
-    soroban_sdk::{self, env, Address, InstanceStore, Lazy, LoamKey, PersistentMap, String},
+    soroban_sdk::{self, env, Address, InstanceItem, Lazy, LoamKey, PersistentMap, String},
     subcontract,
 };
 
@@ -16,7 +16,7 @@ pub struct Contract;
 #[derive(Default)]
 pub struct Token {
     /// Name of the token
-    name: InstanceStore<String>,
+    name: InstanceItem<String>,
     /// Mapping of account addresses to their token balances
     balances: PersistentMap<Address, i128>,
     /// Mapping of transactions to their associated allowances
@@ -24,9 +24,9 @@ pub struct Token {
     /// Mapping of addresses to their authorization status
     authorized: PersistentMap<Address, bool>,
     /// Symbol of the token
-    symbol: InstanceStore<String>,
+    symbol: InstanceItem<String>,
     /// Number of decimal places for token amounts
-    decimals: InstanceStore<u32>,
+    decimals: InstanceItem<u32>,
 }
 
 impl Token {

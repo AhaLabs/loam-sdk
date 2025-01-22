@@ -29,7 +29,7 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
             let field_name = field.ident.as_ref();
             let field_type = &field.ty;
             let Type::Path(type_path) = field_type else {
-                return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentStore, InstanceStore, or TemporaryStore"));
+                return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentItem, InstanceItem, or TemporaryItem"));
             };
 
             let last_segment = type_path.path.segments.last().unwrap();
@@ -39,10 +39,10 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
                 ident @ ("PersistentMap" | "InstanceMap" | "TemporaryMap") => {
                     generate_map_field(field_name, field_type, &key_wrapper, ident, &module_name, struct_name)
                 },
-                ident @ ("PersistentStore" | "InstanceStore" | "TemporaryStore") => {
+                ident @ ("PersistentItem" | "InstanceItem" | "TemporaryItem") => {
                     generate_store_field(field_name, field_type, &key_wrapper, ident, &module_name, struct_name)
                 },
-                _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentStore, InstanceStore, or TemporaryStore")),
+                _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentItem, InstanceItem, or TemporaryItem")),
             }
         })
         .collect::<Result<Vec<_>>>()?
@@ -207,7 +207,7 @@ fn generate_data_key_variants(
         let field_type = &field.ty;
 
         let Type::Path(type_path) = field_type else {
-            return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentStore, InstanceStore, or TemporaryStore"));
+            return Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentItem, InstanceItem, or TemporaryItem"));
         };
         let last_segment = type_path.path.segments.last().unwrap();
         match last_segment.ident.to_string().as_str() {
@@ -224,10 +224,10 @@ fn generate_data_key_variants(
                     Err(Error::new_spanned(field_type, "Map must contain key and value types"))
                 }
             },
-            "PersistentStore" | "InstanceStore" | "TemporaryStore" => {
+            "PersistentItem" | "InstanceItem" | "TemporaryItem" => {
                 Ok(quote! { #field_name })
             },
-            _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentStore, InstanceStore, or TemporaryStore")),
+            _ => Err(Error::new_spanned(field_type, "Must use one of PersistentMap, InstanceMap, TemporaryMap, PersistentItem, InstanceItem, or TemporaryItem")),
         }
     }).collect()
 }
@@ -243,7 +243,7 @@ mod test {
         let input: Item = syn::parse_quote! {
             struct Foo {
                 bar: PersistentMap<String, u64>,
-                baz: TemporaryStore<u64>,
+                baz: TemporaryItem<u64>,
             }
         };
         let generated = from_item(input).unwrap();
@@ -251,7 +251,7 @@ mod test {
         #[derive(Clone, Default)]
         pub struct Foo {
             bar: PersistentMap<String, u64, foo_keys__::FooBarKey>,
-            baz: TemporaryStore<u64, foo_keys__::FooBazKey>,
+            baz: TemporaryItem<u64, foo_keys__::FooBazKey>,
         }
         impl soroban_sdk::Lazy for Foo {
             fn get_lazy() -> Option<Self> {
