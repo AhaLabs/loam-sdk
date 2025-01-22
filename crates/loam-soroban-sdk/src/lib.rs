@@ -2,8 +2,10 @@
 
 pub use soroban_sdk::*;
 pub mod into_key;
+pub mod loam_storage;
 
 pub use into_key::IntoKey;
+pub use loam_storage::*;
 
 /// Trait for loading and setting a singleton type
 pub trait Lazy: Sized {
