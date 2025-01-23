@@ -134,7 +134,7 @@ fn generate_map_field(
             }
         }
 
-        impl LoamKey for #key_wrapper {
+        impl soroban_sdk::LoamKey for #key_wrapper {
             fn to_key(&self) -> soroban_sdk::Val {
                 soroban_sdk::IntoVal::into_val(&#data_key::#enum_case_name(self.0.clone()),env())
             }
@@ -184,7 +184,7 @@ fn generate_store_field(
         #[derive(Clone, Default)]
         pub struct #key_wrapper;
 
-        impl LoamKey for #key_wrapper {
+        impl soroban_sdk::LoamKey for #key_wrapper {
             fn to_key(&self) -> soroban_sdk::Val {
                 soroban_sdk::IntoVal::into_val(&#data_key::#enum_case_name, env())
             }
@@ -277,14 +277,14 @@ mod test {
                     Self(key)
                 }
             }
-            impl LoamKey for FooBarKey {
+            impl soroban_sdk::LoamKey for FooBarKey {
                 fn to_key(&self) -> soroban_sdk::Val {
                     soroban_sdk::IntoVal::into_val(&FooKey::FooBar(self.0.clone()), env())
                 }
             }
             #[derive(Clone, Default)]
             pub struct FooBazKey;
-            impl LoamKey for FooBazKey {
+            impl soroban_sdk::LoamKey for FooBazKey {
                 fn to_key(&self) -> soroban_sdk::Val {
                     soroban_sdk::IntoVal::into_val(&FooKey::FooBaz, env())
                 }
