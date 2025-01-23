@@ -2179,6 +2179,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "loam-registry"
+version = "0.1.0"
+dependencies = [
+ "loam-sdk",
+ "loam-subcontract-core",
+]
+
+[[package]]
 name = "loam-sdk"
 version = "0.6.16"
 dependencies = [
