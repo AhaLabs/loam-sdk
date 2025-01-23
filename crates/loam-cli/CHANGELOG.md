@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.4](https://github.com/loambuild/loam/compare/loam-cli-v0.14.3...loam-cli-v0.14.4) - 2025-01-22
+
+### Added
+
+- loam storage (#177)
+- *(cli)* autostart dev container if "run-locally = true" (#176)
+
+### Other
+
+- Update README.md to binstall for CLI ([#178](https://github.com/loambuild/loam/pull/178))
+- update soroban-sdk to v22 ([#175](https://github.com/loambuild/loam/pull/175))
+- upgrade to stellar-cli v22.0 ([#173](https://github.com/loambuild/loam/pull/173))
+
 ## [0.14.3](https://github.com/loambuild/loam/compare/loam-cli-v0.14.2...loam-cli-v0.14.3) - 2024-09-30
 
 ### Fixed

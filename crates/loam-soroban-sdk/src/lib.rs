@@ -2,8 +2,10 @@
 
 pub use soroban_sdk::*;
 pub mod into_key;
+pub mod loam_storage;
 
 pub use into_key::IntoKey;
+pub use loam_storage::*;
 
 /// Trait for loading and setting a singleton type
 pub trait Lazy: Sized {
@@ -26,6 +28,7 @@ pub fn set_env(env: Env) {
 /// It is expected that the environment is always initialized before this
 /// function is called in normal operation.
 #[must_use]
+#[allow(static_mut_refs)]
 pub fn env() -> &'static Env {
     unsafe { ENV.as_ref().unwrap() }
 }

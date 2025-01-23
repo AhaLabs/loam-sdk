@@ -32,7 +32,6 @@ build:
 setup:
     -cargo binstall -y --install-path ./target/bin stellar-cli --version {{stellar-version}}
 
-
 # Build loam-cli test contracts to speed up testing
 build-cli-test-contracts:
     cargo run -- build --manifest-path crates/loam-cli/tests/fixtures/soroban-init-boilerplate/Cargo.toml

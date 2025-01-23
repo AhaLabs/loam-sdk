@@ -1,6 +1,6 @@
 [package]
 name = "loam-sdk-macro"
-version = "0.8.5"
+version = "0.8.6"
 edition = "2021"
 description = "Macros needed by loam-sdk"
 license = "Apache-2.0"
@@ -27,6 +27,7 @@ cargo_metadata = { workspace = true }
 darling = "0.20.8"
 itertools = "0.13.0"
 regex = "1.10.5"
+heck = "0.5.0"
 
 [dev-dependencies]
 assert_fs = "1.0.13"

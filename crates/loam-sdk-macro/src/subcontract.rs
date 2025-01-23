@@ -10,6 +10,7 @@ use crate::{
 
 pub mod into_key;
 pub mod lazy;
+pub mod storage;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -57,7 +58,7 @@ fn generate_method(trait_item: &syn::TraitItem) -> Option<TokenStream> {
                 attrs,
                 name,
                 &args_without_self,
-                &return_question_mark,
+                return_question_mark.as_ref(),
             ))
         } else {
             Some(generate_immutable_method(
@@ -121,7 +122,7 @@ fn generate_mutable_method(
     attrs: &[Attribute],
     name: &Ident,
     args_without_self: &[Ident],
-    return_question_mark: &Option<TokenStream>,
+    return_question_mark: Option<&TokenStream>,
 ) -> TokenStream {
     let inputs = sig.inputs.iter().skip(1);
     let output = &sig.output;
