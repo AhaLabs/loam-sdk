@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/*", "test/*", "examples/soroban/*"]
+members = ["crates/*", "test/*", "examples/soroban/*", "stellar_version"]
 exclude = ["test/*", "examples/soroban/*"]
 
 [workspace.package]
@@ -18,6 +18,7 @@ soroban-sdk = "22.0.0-rc.3"
 stellar-xdr = "22.0.0-rc.1.1"
 stellar-strkey = "0.0.11"
 
+cargo-run-bin = "1.7.3"
 cargo_metadata = "0.18.1"
 thiserror = "1.0.38"
 sha2 = "0.10.7"
