@@ -1,4 +1,4 @@
-use loam_sdk::soroban_sdk::{self, contracttype, env, Address, Map, String};
+use loam_sdk::soroban_sdk::{self, contracttype, env, to_string, Address, Map, String};
 
 #[derive(Clone, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[contracttype]
@@ -9,7 +9,7 @@ pub struct ContractMetadata {
 impl Default for ContractMetadata {
     fn default() -> Self {
         Self {
-            repo: String::from_str(env(), ""),
+            repo: to_string(""),
         }
     }
 }

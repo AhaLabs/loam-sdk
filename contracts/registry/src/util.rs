@@ -1,6 +1,6 @@
-use loam_sdk::soroban_sdk::{env, Bytes, BytesN, String};
+use loam_sdk::soroban_sdk::{env, Bytes, crypto::Hash, String};
 
-pub fn hash_string(s: &String) -> BytesN<32> {
+pub fn hash_string(s: &String) -> Hash<32> {
     let env = env();
     let len = s.len() as usize;
     let mut bytes = [0u8; 100];

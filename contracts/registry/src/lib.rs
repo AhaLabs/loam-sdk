@@ -1,8 +1,8 @@
 #![no_std]
 use loam_sdk::soroban_sdk;
-use loam_sdk_core_riff::{admin::Admin, Core};
+use loam_subcontract_core::{admin::Admin, Core};
 use registry::{
-    contract::ContractRegistry, wasm::WasmRegistry, Claimable, Deployable, DevDeployable,
+    contract::Contract as Contract_, wasm::Wasm, Claimable, Deployable, DevDeployable,
     Publishable,
 };
 
@@ -17,10 +17,10 @@ use version::Version;
 
 #[loam_sdk::derive_contract(
     Core(Admin),
-    Publishable(WasmRegistry),
-    Deployable(ContractRegistry),
-    Claimable(ContractRegistry),
-    DevDeployable(ContractRegistry)
+    Publishable(Wasm),
+    Deployable(Contract_),
+    Claimable(Contract_),
+    DevDeployable(Contract_)
 )]
 pub struct Contract;
 

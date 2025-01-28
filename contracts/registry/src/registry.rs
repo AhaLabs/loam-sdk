@@ -32,19 +32,22 @@ pub trait IsPublishable {
     /// Publish a binary. If contract had been previously published only previous author can publish again
     fn publish(
         &mut self,
-        contract_name: soroban_sdk::String,
+        wasm_name: soroban_sdk::String,
         author: soroban_sdk::Address,
         wasm: soroban_sdk::Bytes,
         repo: Option<soroban_sdk::String>,
         kind: Option<version::Update>,
     ) -> Result<(), Error>;
 
-    /// Paginate the published contracts. Defaults: start = 0, limit = rest
-    fn list_published_contracts(
-        &self,
-        start: Option<u32>,
-        limit: Option<u32>,
-    ) -> Result<soroban_sdk::Vec<(soroban_sdk::String, crate::metadata::PublishedContract)>, Error>;
+    /// Publish a binary. If contract had been previously published only previous author can publish again
+    fn publish_hash(
+        &mut self,
+        wasm_name: soroban_sdk::String,
+        author: soroban_sdk::Address,
+        wasm_hash: soroban_sdk::BytesN<32>,
+        repo: Option<soroban_sdk::String>,
+        kind: Option<version::Update>,
+    ) -> Result<(), Error>;
 }
 
 #[loam_sdk::subcontract]
@@ -66,13 +69,6 @@ pub trait IsDeployable {
         &self,
         deployed_name: soroban_sdk::String,
     ) -> Result<soroban_sdk::Address, Error>;
-
-    /// Paginate the deployed contracts. Defaults: start = 0, limit = rest
-    fn list_deployed_contracts(
-        &self,
-        start: Option<u32>,
-        limit: Option<u32>,
-    ) -> Result<soroban_sdk::Vec<(soroban_sdk::String, soroban_sdk::Address)>, Error>;
 }
 
 #[loam_sdk::subcontract]

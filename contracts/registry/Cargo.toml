@@ -16,10 +16,12 @@ doctest = false
 [dependencies]
 loam-sdk = { workspace = true }
 loam-subcontract-core = { workspace = true }
+example-core = { path = "../../examples/soroban/core" }
 
 
 [dev_dependencies]
 loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
+assert_matches = "1.5.0"
 
 [package.metadata.loam]
 contract = true

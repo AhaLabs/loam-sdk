@@ -1,44 +1,27 @@
-use loam_sdk::soroban_sdk::{
-    self, contracttype, env, symbol_short, vec, Address, Lazy, Map, String, Symbol,
+use loam_sdk::{
+    loamstorage, log,
+    soroban_sdk::{self, env, Address, LoamKey, PersistentMap, String},
 };
 
 use crate::{
     error::Error,
     metadata::{ContractMetadata, PublishedContract, PublishedWasm},
-    util::MAX_BUMP,
     version::{self, Version, INITAL_VERSION},
 };
 
 use super::IsPublishable;
 
-#[contracttype(export = false)]
+#[loamstorage]
 
-pub struct WasmRegistry(Map<String, PublishedContract>);
-
-fn key() -> Symbol {
-    symbol_short!("wasmReg")
+pub struct Wasm {
+    registry: PersistentMap<String, PublishedContract>,
 }
 
-impl Lazy for WasmRegistry {
-    fn get_lazy() -> Option<Self> {
-        env().storage().persistent().get(&key())
-    }
-
-    fn set_lazy(self) {
-        let key = &key();
-        env().storage().persistent().set(key, &self);
-        env().storage().persistent().extend_ttl(key, MAX_BUMP, MAX_BUMP);
-    }
-}
-
-impl Default for WasmRegistry {
-    fn default() -> Self {
-        Self(Map::new(env()))
-    }
-}
-impl WasmRegistry {
+impl Wasm {
     pub fn find_contract(&self, name: String) -> Result<PublishedContract, Error> {
-        self.0.get(name).ok_or(Error::NoSuchContractPublished)
+        self.registry
+            .get(name)
+            .ok_or(Error::NoSuchContractPublished)
     }
 
     pub fn find_version(
@@ -49,12 +32,12 @@ impl WasmRegistry {
         self.find_contract(name)?.get(version)
     }
 
-    pub fn set_contract(&mut self, name: String, contract: PublishedContract) {
-        self.0.set(name, contract);
+    pub fn set_contract(&mut self, name: String, contract: &PublishedContract) {
+        self.registry.set(name, contract);
     }
 }
 
-impl IsPublishable for WasmRegistry {
+impl IsPublishable for Wasm {
     fn fetch(
         &self,
         contract_name: String,
@@ -69,19 +52,35 @@ impl IsPublishable for WasmRegistry {
 
     fn publish(
         &mut self,
-        contract_name: String,
+        wasm_name: String,
         author: Address,
         wasm: soroban_sdk::Bytes,
         repo: Option<String>,
         kind: Option<version::Update>,
     ) -> Result<(), Error> {
+        let wasm_hash = env().deployer().upload_contract_wasm(wasm);
+        self.publish_hash(wasm_name, author, wasm_hash, repo, kind)
+    }
+
+    fn publish_hash(
+        &mut self,
+        wasm_name: soroban_sdk::String,
+        author: soroban_sdk::Address,
+        wasm_hash: soroban_sdk::BytesN<32>,
+        repo: Option<soroban_sdk::String>,
+        kind: Option<version::Update>,
+    ) -> Result<(), Error> {
         let mut contract = self
-            .find_contract(contract_name.clone())
-            .unwrap_or_else(|_| PublishedContract::new(author));
+            .find_contract(wasm_name.clone())
+            .unwrap_or_else(|_| PublishedContract::new(author.clone()));
+
+        if author != contract.author {
+            return Err(Error::AlreadyPublished);
+        }
         contract.author.require_auth();
+
         let keys = contract.versions.keys();
         let last_version = keys.last().unwrap_or_default();
-
         last_version.log();
         let new_version = last_version.clone().update(&kind.unwrap_or_default());
         new_version.log();
@@ -93,28 +92,9 @@ impl IsPublishable for WasmRegistry {
         } else {
             contract.get(Some(last_version))?.metadata
         };
-        let hash = env().deployer().upload_contract_wasm(wasm);
-        let published_binary = PublishedWasm { hash, metadata };
+        let published_binary = PublishedWasm { hash: wasm_hash, metadata };
         contract.versions.set(new_version, published_binary);
-        self.set_contract(contract_name, contract);
+        self.set_contract(wasm_name, &contract);
         Ok(())
-    }
-
-    fn list_published_contracts(
-        &self,
-        start: Option<u32>,
-        limit: Option<u32>,
-    ) -> Result<soroban_sdk::Vec<(soroban_sdk::String, crate::metadata::PublishedContract)>, Error>
-    {
-        let items = self
-            .0
-            .iter()
-            .skip(start.unwrap_or_default() as usize)
-            .take(limit.unwrap_or_else(|| self.0.len()) as usize);
-        let mut res = vec![env()];
-        for item in items {
-            res.push_back(item);
-        }
-        Ok(res)
     }
 }
