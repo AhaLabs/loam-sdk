@@ -1,6 +1,8 @@
 #![no_std]
 
 pub use soroban_sdk::*;
+use soroban_sdk::unwrap::UnwrapOptimized;
+
 pub mod into_key;
 pub mod loam_storage;
 
@@ -20,6 +22,10 @@ pub fn set_env(env: Env) {
     unsafe { ENV = Some(env) };
 }
 
+pub fn to_string(s: &str) -> String {
+    soroban_sdk::String::from_str(env(), s)
+}
+
 /// Returns a reference to the current environment.
 ///
 /// # Panics
@@ -29,8 +35,9 @@ pub fn set_env(env: Env) {
 /// function is called in normal operation.
 #[must_use]
 #[allow(static_mut_refs)]
+#[inline]
 pub fn env() -> &'static Env {
-    unsafe { ENV.as_ref().unwrap() }
+    unsafe { ENV.as_ref().unwrap_optimized() }
 }
 
 impl<T> Lazy for T
