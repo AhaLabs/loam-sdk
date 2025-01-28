@@ -2,7 +2,8 @@
 use loam_sdk::{
     loamstorage,
     soroban_sdk::{
-        self, contracttype, env, symbol_short, Address, BytesN, Env, IntoVal, Lazy, LoamKey, PersistentMap, String, Symbol, Val
+        self, contracttype, env, symbol_short, Address, BytesN, Env, IntoVal, Lazy, LoamKey,
+        PersistentMap, String, Symbol, Val,
     },
 };
 
@@ -80,10 +81,8 @@ impl IsDeployable for Contract {
         if let Some((init_fn, args)) = init {
             let _ = env.invoke_contract::<Val>(&address, &init_fn, args);
         }
-        self.registry.set(
-            deployed_name.clone(),
-            &ContractType::Id(address.clone()),
-        );
+        self.registry
+            .set(deployed_name.clone(), &ContractType::Id(address.clone()));
 
         // Publish a deploy event
         let version = version.map_or_else(
@@ -102,8 +101,7 @@ impl IsDeployable for Contract {
             deployer: owner,
             contract_id: address.clone(),
         };
-        env
-            .events()
+        env.events()
             .publish((symbol_short!("deploy"),), deploy_datas);
 
         Ok(address)
@@ -199,8 +197,7 @@ impl IsDevDeployable for Contract {
         }
         let salt = hash_string(&name);
         let id = deploy_and_init(&owner, salt, wasm_hash)?;
-        self.registry
-            .set(name, &ContractType::Id(id.clone()));
+        self.registry.set(name, &ContractType::Id(id.clone()));
         Ok(id)
     }
 }

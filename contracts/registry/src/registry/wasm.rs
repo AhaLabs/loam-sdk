@@ -92,7 +92,10 @@ impl IsPublishable for Wasm {
         } else {
             contract.get(Some(last_version))?.metadata
         };
-        let published_binary = PublishedWasm { hash: wasm_hash, metadata };
+        let published_binary = PublishedWasm {
+            hash: wasm_hash,
+            metadata,
+        };
         contract.versions.set(new_version, published_binary);
         self.set_contract(wasm_name, &contract);
         Ok(())

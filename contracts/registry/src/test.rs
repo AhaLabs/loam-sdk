@@ -1,8 +1,11 @@
 use crate::{error::Error, SorobanContract__Client as SorobanContractClient};
-use loam_sdk::soroban_sdk::{env, set_env, testutils::{Address as _, BytesN as _}, to_string, Address, Bytes, BytesN, Env, IntoVal, String};
 use assert_matches::assert_matches;
+use loam_sdk::soroban_sdk::{
+    env, set_env,
+    testutils::{Address as _, BytesN as _},
+    to_string, Address, Bytes, BytesN, Env, IntoVal,
+};
 extern crate std;
-
 
 loam_sdk::import_contract!(loam_registry);
 // The contract that will be deployed by the Publisher contract.
@@ -15,7 +18,8 @@ fn init() -> (SorobanContractClient<'static>, Address) {
     set_env(Env::default());
     let env = env();
     let contract_id = Address::generate(env);
-    let client = SorobanContractClient::new(env, &env.register_at(&contract_id, loam_registry::WASM, ()));
+    let client =
+        SorobanContractClient::new(env, &env.register_at(&contract_id, loam_registry::WASM, ()));
     let address = Address::generate(env);
     (client, address)
 }
@@ -26,12 +30,18 @@ fn handle_error_cases() {
     let env = env();
 
     let name = &to_string("publisher");
-    assert_matches!(client.try_fetch(name, &None).unwrap_err(), Ok(Error::NoSuchContractPublished));
+    assert_matches!(
+        client.try_fetch(name, &None).unwrap_err(),
+        Ok(Error::NoSuchContractPublished)
+    );
 
     let wasm_hash = env.deployer().upload_contract_wasm(loam_registry::WASM);
 
-    assert_matches!(client.try_fetch(name, &None).unwrap_err(), Ok(Error::NoSuchContractPublished));
-    
+    assert_matches!(
+        client.try_fetch(name, &None).unwrap_err(),
+        Ok(Error::NoSuchContractPublished)
+    );
+
     let bytes = Bytes::from_slice(env, loam_registry::WASM);
     env.mock_all_auths();
     let res = client.try_publish(name, address, &bytes, &None, &None);
@@ -54,13 +64,17 @@ fn returns_most_recent_version() {
     // client.register_name(address, name);
     let bytes = Bytes::from_slice(env, loam_registry::WASM);
     env.mock_all_auths();
-    client.try_publish(name,  address, &bytes, &None, &None).unwrap();
+    client
+        .try_publish(name, address, &bytes, &None, &None)
+        .unwrap();
     let fetched_hash = client.fetch(name, &None).hash;
     let wasm_hash = env.deployer().upload_contract_wasm(loam_registry::WASM);
     assert_eq!(fetched_hash, wasm_hash);
-    
+
     let second_hash: BytesN<32> = BytesN::random(env);
-    client.try_publish_hash(name,  address, &second_hash.into_val(env), &None, &None).unwrap();
+    client
+        .try_publish_hash(name, address, &second_hash.into_val(env), &None, &None)
+        .unwrap();
     let res = client.fetch(name, &None).hash;
     assert_eq!(res, second_hash);
 

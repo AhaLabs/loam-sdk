@@ -1,4 +1,4 @@
-use loam_sdk::soroban_sdk::{env, Bytes, crypto::Hash, String};
+use loam_sdk::soroban_sdk::{crypto::Hash, env, Bytes, String};
 
 pub fn hash_string(s: &String) -> Hash<32> {
     let env = env();
@@ -10,6 +10,5 @@ pub fn hash_string(s: &String) -> Hash<32> {
     b.copy_from_slice(0, bytes);
     env.crypto().sha256(&b)
 }
-
 
 pub const MAX_BUMP: u32 = 535_679;
