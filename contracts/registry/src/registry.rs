@@ -27,7 +27,7 @@ pub trait IsPublishable {
         &self,
         contract_name: soroban_sdk::String,
         version: Option<Version>,
-    ) -> Result<crate::metadata::PublishedWasm, Error>;
+    ) -> Result<crate::metadata::Wasm, Error>;
 
     /// Publish a binary. If contract had been previously published only previous author can publish again
     fn publish(

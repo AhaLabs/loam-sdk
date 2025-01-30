@@ -1,8 +1,10 @@
 #![no_std]
 use loam_sdk::soroban_sdk;
 use loam_subcontract_core::{admin::Admin, Core};
+
+use metadata::PublishedWasm;
 use registry::{
-    contract::Contract as Contract_, wasm::Wasm, Claimable, Deployable, DevDeployable, Publishable,
+    contract::Contract as Contract_, Claimable, Deployable, DevDeployable, Publishable
 };
 
 pub mod error;
@@ -16,7 +18,7 @@ use version::Version;
 
 #[loam_sdk::derive_contract(
     Core(Admin),
-    Publishable(Wasm),
+    Publishable(PublishedWasm),
     Deployable(Contract_),
     Claimable(Contract_),
     DevDeployable(Contract_)

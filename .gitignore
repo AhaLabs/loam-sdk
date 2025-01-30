@@ -1,4 +1,4 @@
 target/
 .soroban/
 .env
-test_snapshots/
+# test_snapshots/
