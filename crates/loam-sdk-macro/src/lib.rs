@@ -70,6 +70,7 @@ pub fn import_contract(tokens: TokenStream) -> TokenStream {
     let file = binding.to_str().unwrap();
     quote! {
         mod #name {
+            #![allow(clippy::ref_option)]
             use loam_sdk::soroban_sdk;
             loam_sdk::soroban_sdk::contractimport!(file = #file);
         }

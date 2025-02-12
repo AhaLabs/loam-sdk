@@ -65,11 +65,12 @@ fn generate_storage(item_struct: &ItemStruct) -> Result<TokenStream> {
     };
 
     let data_key_variants = generate_data_key_variants(fields, struct_name)?;
+    let data_key = format_ident!("{struct_name}Key");
 
     let additional_items = quote! {
         #[derive(Clone)]
         #[soroban_sdk::contracttype]
-        pub enum DataKey {
+        pub enum #data_key {
             #(#data_key_variants,)*
         }
 
@@ -121,6 +122,7 @@ fn generate_map_field(
     let enum_case_name = field_to_enum_case(field_name, struct_name);
     let key_type = &generic_args.args[0];
     let value_type = &generic_args.args[1];
+    let data_key = format_ident!("{struct_name}Key");
 
     let additional_item = quote! {
         #[derive(Clone)]
@@ -132,9 +134,9 @@ fn generate_map_field(
             }
         }
 
-        impl LoamKey for #key_wrapper {
+        impl soroban_sdk::LoamKey for #key_wrapper {
             fn to_key(&self) -> soroban_sdk::Val {
-                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name(self.0.clone()),env())
+                soroban_sdk::IntoVal::into_val(&#data_key::#enum_case_name(self.0.clone()),env())
             }
         }
     };
@@ -177,13 +179,14 @@ fn generate_store_field(
     let store_type_ident = format_ident!("{}", store_type);
     let struct_field =
         quote! { #field_name: #store_type_ident<#value_type, #module_name::#key_wrapper> };
+    let data_key = format_ident!("{struct_name}Key");
     let additional_item = quote! {
         #[derive(Clone, Default)]
         pub struct #key_wrapper;
 
-        impl LoamKey for #key_wrapper {
+        impl soroban_sdk::LoamKey for #key_wrapper {
             fn to_key(&self) -> soroban_sdk::Val {
-                soroban_sdk::IntoVal::into_val(&DataKey::#enum_case_name, env())
+                soroban_sdk::IntoVal::into_val(&#data_key::#enum_case_name, env())
             }
         }
     };
@@ -263,7 +266,7 @@ mod test {
             use super::*;
             #[derive(Clone)]
             #[soroban_sdk::contracttype]
-            pub enum DataKey {
+            pub enum FooKey {
                 FooBar(String),
                 FooBaz,
             }
@@ -274,16 +277,16 @@ mod test {
                     Self(key)
                 }
             }
-            impl LoamKey for FooBarKey {
+            impl soroban_sdk::LoamKey for FooBarKey {
                 fn to_key(&self) -> soroban_sdk::Val {
-                    soroban_sdk::IntoVal::into_val(&DataKey::FooBar(self.0.clone()), env())
+                    soroban_sdk::IntoVal::into_val(&FooKey::FooBar(self.0.clone()), env())
                 }
             }
             #[derive(Clone, Default)]
             pub struct FooBazKey;
-            impl LoamKey for FooBazKey {
+            impl soroban_sdk::LoamKey for FooBazKey {
                 fn to_key(&self) -> soroban_sdk::Val {
-                    soroban_sdk::IntoVal::into_val(&DataKey::FooBaz, env())
+                    soroban_sdk::IntoVal::into_val(&FooKey::FooBaz, env())
                 }
             }
         }
