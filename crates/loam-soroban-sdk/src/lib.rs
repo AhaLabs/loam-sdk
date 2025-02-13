@@ -22,6 +22,8 @@ pub fn set_env(env: Env) {
     unsafe { ENV = Some(env) };
 }
 
+/// Utility to cast a `&str` to a `String`.
+#[must_use]
 pub fn to_string(s: &str) -> String {
     soroban_sdk::String::from_str(env(), s)
 }

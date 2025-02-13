@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 // Currently need to import `self` because `contracttype` expects it in the namespace
 use loam_sdk::{
     log,
