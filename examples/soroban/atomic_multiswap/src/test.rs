@@ -78,7 +78,7 @@ fn test_atomic_multi_swap() {
 
     let contract = create_atomic_multiswap_contract(&env);
 
-    let swap_contract_id = env.register( example_atomic_swap::WASM, ());
+    let swap_contract_id = env.register(example_atomic_swap::WASM, ());
 
     contract.multi_swap(
         &swap_contract_id,

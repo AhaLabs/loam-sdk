@@ -6,7 +6,10 @@
 //! while following the price limit.
 //! This example demonstrates how authorized calls can be batched together.
 #![no_std]
-use loam_sdk::{import_contract, soroban_sdk::{Address, Vec}};
+use loam_sdk::{
+    import_contract,
+    soroban_sdk::{Address, Vec},
+};
 use loam_subcontract_core::{admin::Admin, Core};
 
 pub mod subcontract;

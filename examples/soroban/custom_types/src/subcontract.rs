@@ -1,5 +1,7 @@
 use loam_sdk::{
-    loamstorage, soroban_sdk::{self, contracttype, env, Lazy, PersistentItem}, subcontract
+    loamstorage,
+    soroban_sdk::{self, contracttype, env, Lazy, PersistentItem},
+    subcontract,
 };
 
 #[contracttype]
@@ -11,7 +13,7 @@ pub struct State {
 
 #[loamstorage]
 pub struct Inc {
-    s: PersistentItem<State>
+    s: PersistentItem<State>,
 }
 
 #[subcontract]

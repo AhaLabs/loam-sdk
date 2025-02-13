@@ -1,10 +1,12 @@
 use loam_sdk::{
-    loamstorage, soroban_sdk::{self, env, Address, Lazy, PersistentMap}, subcontract
+    loamstorage,
+    soroban_sdk::{self, env, Address, Lazy, PersistentMap},
+    subcontract,
 };
 
 #[loamstorage]
 pub struct IncrementContract {
-    counters: PersistentMap<Address, u32>
+    counters: PersistentMap<Address, u32>,
 }
 
 #[subcontract]

@@ -3,16 +3,16 @@ extern crate std;
 
 use ed25519_dalek::Keypair;
 use ed25519_dalek::Signer;
+use loam_sdk::soroban_sdk::auth::{Context, ContractContext};
 use loam_sdk::soroban_sdk::symbol_short;
 use loam_sdk::soroban_sdk::Address;
 use loam_sdk::soroban_sdk::Val;
-use rand::thread_rng;
-use loam_sdk::soroban_sdk::auth::{Context, ContractContext};
 use loam_sdk::soroban_sdk::{
     self,
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation, BytesN as _},
     vec, BytesN, Env, IntoVal, Symbol,
 };
+use rand::thread_rng;
 
 use crate::Error;
 use crate::{Signature, SorobanContract__, SorobanContract__Client};
@@ -26,7 +26,7 @@ fn signer_public_key(e: &Env, signer: &Keypair) -> BytesN<32> {
 }
 
 fn create_account_contract(e: &Env) -> SorobanContract__Client {
-    SorobanContract__Client::new(e, &e.register( SorobanContract__, ()))
+    SorobanContract__Client::new(e, &e.register(SorobanContract__, ()))
 }
 
 fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {

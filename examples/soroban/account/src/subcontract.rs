@@ -1,7 +1,10 @@
 use loam_sdk::{
-    loamstorage, soroban_sdk::{
-        self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map, PersistentItem, PersistentMap, Symbol, TryIntoVal, Vec 
-    }, subcontract
+    loamstorage,
+    soroban_sdk::{
+        self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map,
+        PersistentItem, PersistentMap, Symbol, TryIntoVal, Vec,
+    },
+    subcontract,
 };
 
 use crate::error::Error as AccError;
@@ -89,7 +92,12 @@ impl IsAccount for AccountManager {
         auth_context: Vec<Context>,
     ) -> Result<(), AccError> {
         // Perform authentication.
-        authenticate(env(), &self.signers.get().unwrap(), &signature_payload, &signatures)?;
+        authenticate(
+            env(),
+            &self.signers.get().unwrap(),
+            &signature_payload,
+            &signatures,
+        )?;
 
         let tot_signers: u32 = self.count.get().unwrap();
         let all_signed = tot_signers == signatures.len();
@@ -132,21 +140,21 @@ impl AccountManager {
             }
         };
         // For the account control every signer must sign the invocation.
-    
+
         // Otherwise, we're only interested in functions that spend tokens.
         if contract_context.fn_name != TRANSFER_FN
             && contract_context.fn_name != Symbol::new(env, "approve")
         {
             return Ok(());
         }
-    
+
         let spend_left: Option<i128> =
             if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
                 Some(spend_left)
             } else {
                 self.limits.get(contract_context.contract.clone())
             };
-    
+
         // 'None' means that the contract is outside of the policy.
         if let Some(spend_left) = spend_left {
             // 'amount' is the third argument in both `approve` and `transfer`.
@@ -195,5 +203,3 @@ fn authenticate(
     }
     Ok(())
 }
-
-
