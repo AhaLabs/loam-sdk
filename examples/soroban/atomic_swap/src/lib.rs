@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 //! This contract performs an atomic token swap between two parties.
 //! Parties don't need to know each other and their signatures may be matched
 //! off-chain.

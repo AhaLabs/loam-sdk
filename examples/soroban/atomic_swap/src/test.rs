@@ -11,17 +11,18 @@ use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, TokenAdminClient<'a>) {
-    let sac = e.register_stellar_asset_contract(admin.clone());
+    let sac = e.register_stellar_asset_contract_v2(admin.clone());
     (
-        token::Client::new(e, &sac),
-        token::StellarAssetClient::new(e, &sac),
+        token::Client::new(e, &sac.address()),
+        token::StellarAssetClient::new(e, &sac.address()),
     )
 }
 
 fn create_atomic_swap_contract(e: &Env) -> SorobanContract__Client {
-    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
+    SorobanContract__Client::new(e, &e.register(SorobanContract__, ()))
 }
 
+#[allow(clippy::similar_names)]
 #[test]
 fn test_atomic_swap() {
     let env = Env::default();
