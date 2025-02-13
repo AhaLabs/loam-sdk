@@ -1,5 +1,5 @@
 use loam_sdk::{
-    loamstorage, soroban_sdk::{self, Lazy, PersistentItem, env}, subcontract, 
+    loamstorage, soroban_sdk::{self, Lazy, PersistentItem}, subcontract, 
 };
 
 #[subcontract]

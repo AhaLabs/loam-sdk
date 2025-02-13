@@ -34,7 +34,6 @@ pub struct MyFungibleToken {
 }
 
 impl MyFungibleToken {
-    #[must_use]
     pub fn init(admin: Address, name: String, symbol: String, decimals: u32) {
         let mut token = MyFungibleToken::default();
         token.admin.set(&admin);
