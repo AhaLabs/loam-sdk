@@ -19,11 +19,13 @@
 # target = "triple"             # build for the target triple (ignored by `cargo install`)
 # target-dir = "target"         # path of where to place all generated artifacts
 rustflags = [
-    "-Wclippy::pedantic",
+    "-Dclippy::pedantic",
     "-Aclippy::needless_pass_by_value",
     "-Aclippy::must_use_candidate",
     "-Aclippy::missing_panics_doc",
     "-Aclippy::missing_errors_doc",
+    "-Aunexpected-cfgs",
+    "-Dwarnings"
     # "-Aclippy::missing_safety_doc",
     # "-Aclippy::inline_always",
     # "-Aclippy::default_trait_access",
