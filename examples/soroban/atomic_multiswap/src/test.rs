@@ -12,17 +12,18 @@ use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, TokenAdminClient<'a>) {
-    let sac = e.register_stellar_asset_contract(admin.clone());
+    let sac = e.register_stellar_asset_contract_v2(admin.clone());
     (
-        token::Client::new(e, &sac),
-        token::StellarAssetClient::new(e, &sac),
+        token::Client::new(e, &sac.address()),
+        token::StellarAssetClient::new(e, &sac.address()),
     )
 }
 
 fn create_atomic_multiswap_contract(e: &Env) -> SorobanContract__Client {
-    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
+    SorobanContract__Client::new(e, &e.register(SorobanContract__, ()))
 }
 
+#[allow(clippy::too_many_lines, clippy::similar_names)]
 #[test]
 fn test_atomic_multi_swap() {
     let env = Env::default();
@@ -77,7 +78,7 @@ fn test_atomic_multi_swap() {
 
     let contract = create_atomic_multiswap_contract(&env);
 
-    let swap_contract_id = env.register_contract_wasm(None, example_atomic_swap::WASM);
+    let swap_contract_id = env.register( example_atomic_swap::WASM, ());
 
     contract.multi_swap(
         &swap_contract_id,
@@ -233,6 +234,7 @@ fn test_atomic_multi_swap() {
     assert_eq!(token_b.balance(&swaps_b[2].address), 50);
 }
 
+#[allow(clippy::too_many_lines, clippy::similar_names)]
 #[test]
 fn test_multi_swap_with_duplicate_account() {
     let env = Env::default();
@@ -274,7 +276,7 @@ fn test_multi_swap_with_duplicate_account() {
 
     let contract = create_atomic_multiswap_contract(&env);
 
-    let swap_contract_id = env.register_contract_wasm(None, example_atomic_swap::WASM);
+    let swap_contract_id = env.register(example_atomic_swap::WASM, ());
 
     contract.multi_swap(
         &swap_contract_id,
