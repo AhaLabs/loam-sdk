@@ -1,6 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, Lazy},
-    subcontract, IntoKey,
+    loamstorage, soroban_sdk::{self, contracttype, Lazy, PersistentItem, env}, subcontract, IntoKey
 };
 
 #[subcontract]
@@ -11,18 +10,21 @@ pub trait IsRiff {
 
 const MAX: u32 = 5;
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct Impl(u32);
+#[loamstorage]
+pub struct Impl {
+    num: PersistentItem<u32>
+}
 
 impl IsRiff for Impl {
     /// Increment increments an internal counter, and returns the value. Errors
     /// if the value is attempted to be incremented past 5.
     fn increment(&mut self) -> Result<u32, crate::error::Error> {
-        self.0 += 1;
-        if self.0 <= MAX {
+        let mut num = self.num.get().unwrap_or_default();
+        num += 1;
+        if num <= MAX {
+            self.num.set(&num);
             // Return the count to the caller.
-            Ok(self.0)
+            Ok(num)
         } else {
             // Return an error if the max is exceeded.
             Err(crate::error::Error::LimitReached)
