@@ -5,17 +5,10 @@ use loam_sdk::soroban_sdk::{self, contracttype, env, log, Env};
 /// Represents the version of the contract
 #[contracttype]
 #[derive(Default, Eq, PartialEq, Clone, Debug)]
-pub struct Version {
-    patch: u32,
-    minor: u32,
-    major: u32,
-}
+pub struct Version(u32, u32, u32);
 
-pub const INITAL_VERSION: Version = Version {
-    major: 0,
-    minor: 0,
-    patch: 1,
-};
+
+pub const INITAL_VERSION: Version = Version(0,0,1);
 
 impl Display for Version {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -30,21 +23,21 @@ impl Version {
 
     #[must_use]
     pub fn publish_patch(mut self) -> Self {
-        self.patch += 1;
+        self.2 += 1;
         self
     }
 
     #[must_use]
     pub fn publish_minor(mut self) -> Self {
-        self.minor += 1;
-        self.patch = 0;
+        self.1 += 1;
+        self.2 = 0;
         self
     }
     #[must_use]
     pub fn publish_major(mut self) -> Self {
-        self.major += 1;
-        self.minor = 0;
-        self.patch = 0;
+        self.0 += 1;
+        self.1 = 0;
+        self.2 = 0;
         self
     }
 
@@ -57,15 +50,15 @@ impl Version {
         }
     }
     pub fn patch(&self) -> u32 {
-        self.patch
+        self.2
     }
 
     pub fn minor(&self) -> u32 {
-        self.minor
+        self.1
     }
 
     pub fn major(&self) -> u32 {
-        self.major
+        self.0
     }
 }
 

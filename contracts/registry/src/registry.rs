@@ -8,6 +8,9 @@ use crate::{
 pub mod contract;
 pub mod wasm;
 
+pub use contract::Contract;
+pub use wasm::Wasm;
+
 #[loam_sdk::subcontract]
 pub trait IsPublishable {
     /// Fetch the hash from the registry
@@ -27,7 +30,7 @@ pub trait IsPublishable {
         &self,
         contract_name: soroban_sdk::String,
         version: Option<Version>,
-    ) -> Result<crate::metadata::Wasm, Error>;
+    ) -> Result<crate::metadata::PublishedWasm, Error>;
 
     /// Publish a binary. If contract had been previously published only previous author can publish again
     fn publish(

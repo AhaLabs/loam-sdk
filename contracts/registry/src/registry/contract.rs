@@ -8,11 +8,11 @@ use loam_sdk::{
 };
 
 use crate::{
-    error::Error, metadata::PublishedWasm, registry::Publishable, util::hash_string,
+    error::Error, registry::Publishable, util::hash_string,
     version::Version, Contract as Contract_,
 };
 
-use super::{IsClaimable, IsDeployable, IsDevDeployable};
+use super::{wasm::Wasm, IsClaimable, IsDeployable, IsDevDeployable};
 
 loam_sdk::import_contract!(example_core);
 
@@ -87,7 +87,7 @@ impl IsDeployable for Contract {
         // Publish a deploy event
         let version = version.map_or_else(
             || {
-                PublishedWasm::default().most_recent_version(&contract_name)
+                Wasm::default().most_recent_version(&contract_name)
             },
             Ok,
         )?;

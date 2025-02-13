@@ -1,5 +1,23 @@
-mod contract;
-pub use contract::*;
+use loam_sdk::soroban_sdk::{self, contracttype, to_string, BytesN, String};
 
-pub mod wasm;
-pub use wasm::*;
+
+
+#[derive(Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Default)]
+#[contracttype]
+pub struct Metadata {
+    pub repo: Option<String>,
+}
+
+impl Metadata {
+    pub fn new(repo: String) -> Self {
+        Self { repo: Some(repo)  }
+    }
+}
+
+/// Contains info about specific version of published binary
+#[contracttype]
+#[derive(Clone, Debug, PartialEq, Eq, Ord, PartialOrd,)]
+pub struct PublishedWasm {
+    pub hash: BytesN<32>,
+    pub metadata: Metadata,
+}
