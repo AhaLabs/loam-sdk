@@ -43,6 +43,7 @@ jobs:
     - run: rustup update
     - run: rustup target add wasm32-unknown-unknown
     - uses: taiki-e/install-action@just
+    - uses: taiki-e/install-action@nextest
     - uses: cargo-bins/cargo-binstall@main
     - run: just setup
     - run: just create

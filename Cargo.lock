@@ -279,6 +279,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_matches"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
+
+[[package]]
 name = "asset"
 version = "0.0.0"
 dependencies = [
@@ -2176,6 +2182,16 @@ dependencies = [
  "toml_edit",
  "walkdir",
  "wasm-gen",
+]
+
+[[package]]
+name = "loam-registry"
+version = "0.1.0"
+dependencies = [
+ "assert_matches",
+ "example-core",
+ "loam-sdk",
+ "loam-subcontract-core",
 ]
 
 [[package]]

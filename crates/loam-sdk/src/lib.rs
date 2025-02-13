@@ -19,3 +19,14 @@ macro_rules! map {
         soroban_sdk::map![soroban_sdk::env(), $($tokens)*]
     };
 }
+
+#[cfg(feature = "loam-soroban-sdk")]
+#[macro_export]
+macro_rules! log {
+    ($($tokens:tt)*) => {
+        {
+        use soroban_sdk::Env;
+        soroban_sdk::log![soroban_sdk::env(), $($tokens)*];
+        }
+    };
+}
