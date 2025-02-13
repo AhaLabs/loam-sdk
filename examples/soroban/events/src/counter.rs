@@ -1,13 +1,13 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, IntoKey, Lazy, Symbol},
-    subcontract,
+    loamstorage, soroban_sdk::{self,  env, symbol_short,  PersistentItem, Symbol, Lazy}, subcontract
 };
 
-const COUNTER: Symbol = Symbol::short("COUNTER");
+const COUNTER: Symbol = symbol_short!("COUNTER");
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct Counter(u32);
+#[loamstorage]
+pub struct Counter {
+    count: PersistentItem<u32>,
+}
 
 #[subcontract]
 pub trait IsIncrementable {
@@ -18,8 +18,9 @@ pub trait IsIncrementable {
 impl IsIncrementable for Counter {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32 {
-        self.0 += 1;
-
+        let mut count = self.count.get().unwrap_or_default();
+        count += 1;
+        self.count.set(&count);
         // Publish an event about the increment occuring.
         // The event has two topics:
         //   - The "COUNTER" symbol.
@@ -27,9 +28,9 @@ impl IsIncrementable for Counter {
         // The event data is the count.
         env()
             .events()
-            .publish((COUNTER, Symbol::short("increment")), self.0);
+            .publish((COUNTER, symbol_short!("increment")), count);
 
         // Return the count to the caller.
-        self.0
+        count
     }
 }
