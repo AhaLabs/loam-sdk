@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use loam_sdk::soroban_sdk::{testutils::Events, vec, Env, IntoVal, Symbol};
+use loam_sdk::soroban_sdk::{self, testutils::Events, vec, Env, IntoVal, symbol_short};
 
 #[test]
 fn test() {
@@ -19,17 +19,17 @@ fn test() {
             &env,
             (
                 contract_id.clone(),
-                (Symbol::short("COUNTER"), Symbol::short("increment")).into_val(&env),
+                (symbol_short!("COUNTER"), symbol_short!("increment")).into_val(&env),
                 1u32.into_val(&env)
             ),
             (
                 contract_id.clone(),
-                (Symbol::short("COUNTER"), Symbol::short("increment")).into_val(&env),
+                (symbol_short!("COUNTER"), symbol_short!("increment")).into_val(&env),
                 2u32.into_val(&env)
             ),
             (
                 contract_id,
-                (Symbol::short("COUNTER"), Symbol::short("increment")).into_val(&env),
+                (symbol_short!("COUNTER"), symbol_short!("increment")).into_val(&env),
                 3u32.into_val(&env)
             ),
         ]
