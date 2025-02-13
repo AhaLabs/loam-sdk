@@ -1,5 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, Lazy, Symbol, Vec},
+    soroban_sdk::{self, Lazy, Symbol, Vec, symbol_short},
     subcontract, vec,
 };
 
@@ -13,6 +13,6 @@ pub trait IsHelloWorld {
 
 impl IsHelloWorld for Hello {
     fn hello(&self, to: Symbol) -> Vec<Symbol> {
-        vec![Symbol::short("Hello"), to]
+        vec![symbol_short!("Hello"), to]
     }
 }

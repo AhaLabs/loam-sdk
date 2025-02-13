@@ -1,17 +1,17 @@
 #![cfg(test)]
 
 use super::*;
-use loam_sdk::soroban_sdk::{vec, Env, Symbol};
+use loam_sdk::soroban_sdk::{self, symbol_short, vec, Env};
 
 #[test]
 fn test() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, SorobanContract__);
+    let contract_id = env.register(SorobanContract__, ());
     let client = SorobanContract__Client::new(&env, &contract_id);
 
-    let words = client.hello(&Symbol::short("Dev"));
+    let words = client.hello(&symbol_short!("Dev"));
     assert_eq!(
         words,
-        vec![&env, Symbol::short("Hello"), Symbol::short("Dev"),]
+        vec![&env, symbol_short!("Hello"), symbol_short!("Dev"),]
     );
 }
