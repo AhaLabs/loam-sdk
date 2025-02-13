@@ -1,5 +1,5 @@
 #![no_std]
-
+#![allow(clippy::similar_names)]
 /// This example demonstrates how a contract can authorize deep subcontract
 /// calls on its behalf.
 ///
@@ -11,7 +11,6 @@
 /// contract B calls contract C. Both contract B and contract C `require_auth`
 /// for contract A address and contract A provides proper authorization to make
 /// the calls succeed.
-
 pub mod contract_a {
 
     use loam_sdk::soroban_sdk::{
