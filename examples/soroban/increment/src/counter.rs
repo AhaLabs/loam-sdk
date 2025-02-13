@@ -1,11 +1,11 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, IntoKey, Lazy},
-    subcontract,
+    loamstorage, soroban_sdk::{self, Lazy, PersistentItem}, subcontract
 };
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct Counter(u32);
+#[loamstorage]
+pub struct Counter{
+    count: PersistentItem<u32>
+}
 
 #[subcontract]
 pub trait IsIncrementable {
@@ -16,7 +16,9 @@ pub trait IsIncrementable {
 impl IsIncrementable for Counter {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32 {
-        self.0 += 1;
-        self.0
+        let mut count = self.count.get().unwrap_or_default();
+        count += 1;
+        self.count.set(&count);
+        count
     }
 }
