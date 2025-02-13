@@ -11,7 +11,7 @@ fn test_calculator() {
 
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, SorobanContract__);
+    let contract_id = env.register(SorobanContract__, ());
     let calculator = SorobanContract__Client::new(&env, &contract_id);
 
     // Test the `add_u32` function
