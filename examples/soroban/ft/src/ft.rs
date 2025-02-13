@@ -1,8 +1,10 @@
 #![allow(deprecated)]
 
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Lazy, Map, String},
-    IntoKey,
+    loamstorage,
+    soroban_sdk::{
+        self, contracttype, env, Address, InstanceItem, PersistentMap, String,
+    },
 };
 use loam_subcontract_core::Core;
 use loam_subcontract_ft::{IsFungible, IsInitable, IsSep41};
@@ -10,56 +12,42 @@ use loam_subcontract_ft::{IsFungible, IsInitable, IsSep41};
 use crate::Contract;
 
 #[contracttype]
+#[derive(Clone)]
 pub struct Txn(Address, Address);
 
 #[contracttype]
+#[derive(Clone)]
 pub struct Allowance {
     amount: i128,
     live_until_ledger: u32,
 }
 
-#[contracttype]
-#[derive(IntoKey)]
+#[loamstorage]
 pub struct MyFungibleToken {
-    balances: Map<Address, i128>,
-    allowances: Map<Txn, Allowance>,
-    authorized: Map<Address, bool>,
-    admin: Address,
-    name: String,
-    symbol: String,
-    decimals: u32,
+    balances: PersistentMap<Address, i128>,
+    allowances: PersistentMap<Txn, Allowance>,
+    authorized: PersistentMap<Address, bool>,
+    admin: InstanceItem<Address>,
+    name: InstanceItem<String>,
+    symbol: InstanceItem<String>,
+    decimals: InstanceItem<u32>,
 }
 
 impl MyFungibleToken {
     #[must_use]
-    pub fn new(admin: Address, name: String, symbol: String, decimals: u32) -> Self {
-        MyFungibleToken {
-            balances: Map::new(env()),
-            allowances: Map::new(env()),
-            authorized: Map::new(env()),
-            admin,
-            name,
-            symbol,
-            decimals,
-        }
-    }
-}
-
-impl Default for MyFungibleToken {
-    fn default() -> Self {
-        Self::new(
-            env().current_contract_address(),
-            String::from_str(env(), ""),
-            String::from_str(env(), ""),
-            0,
-        )
+    pub fn init(admin: Address, name: String, symbol: String, decimals: u32) {
+        let mut token = MyFungibleToken::default();
+        token.admin.set(&admin);
+        token.name.set(&name);
+        token.symbol.set(&symbol);
+        token.decimals.set(&decimals);
     }
 }
 
 impl IsInitable for MyFungibleToken {
     fn ft_init(&mut self, admin: Address, name: String, symbol: String, decimals: u32) {
         Contract::admin_get().unwrap().require_auth();
-        MyFungibleToken::set_lazy(MyFungibleToken::new(admin, name, symbol, decimals));
+        MyFungibleToken::init(admin, name, symbol, decimals);
     }
 }
 
@@ -87,7 +75,7 @@ impl IsSep41 for MyFungibleToken {
         );
         self.allowances.set(
             Txn(from, spender),
-            Allowance {
+            &Allowance {
                 amount,
                 live_until_ledger,
             },
@@ -102,8 +90,8 @@ impl IsSep41 for MyFungibleToken {
         from.require_auth();
         let from_balance = self.balance(from.clone()) - amount;
         let to_balance = self.balance(to.clone()) + amount;
-        self.balances.set(from, from_balance);
-        self.balances.set(to, to_balance);
+        self.balances.set(from, &from_balance);
+        self.balances.set(to, &to_balance);
     }
 
     fn transfer_from(&mut self, spender: Address, from: Address, to: Address, amount: i128) {
@@ -118,7 +106,7 @@ impl IsSep41 for MyFungibleToken {
     fn burn(&mut self, from: Address, amount: i128) {
         from.require_auth();
         let balance = self.balance(from.clone()) - amount;
-        self.balances.set(from, balance);
+        self.balances.set(from, &balance);
     }
 
     fn burn_from(&mut self, spender: Address, from: Address, amount: i128) {
@@ -131,15 +119,15 @@ impl IsSep41 for MyFungibleToken {
     }
 
     fn decimals(&self) -> u32 {
-        self.decimals
+        self.decimals.get().unwrap()
     }
 
     fn name(&self) -> String {
-        self.name.clone()
+        self.name.get().unwrap()
     }
 
     fn symbol(&self) -> String {
-        self.symbol.clone()
+        self.symbol.get().unwrap()
     }
 }
 
@@ -151,7 +139,7 @@ impl IsFungible for MyFungibleToken {
         let current_ledger = env().ledger().sequence();
         self.allowances.set(
             Txn(from, spender),
-            Allowance {
+            &Allowance {
                 amount: new_amount,
                 live_until_ledger: current_ledger + 1000, // Example: set to expire after 1000 ledgers
             },
@@ -165,7 +153,7 @@ impl IsFungible for MyFungibleToken {
         let current_ledger = env().ledger().sequence();
         self.allowances.set(
             Txn(from, spender),
-            Allowance {
+            &Allowance {
                 amount: new_amount,
                 live_until_ledger: current_ledger + 1000, // Example: set to expire after 1000 ledgers
             },
@@ -181,24 +169,24 @@ impl IsFungible for MyFungibleToken {
     }
 
     fn set_authorized(&mut self, id: Address, authorize: bool) {
-        self.admin.require_auth();
-        self.authorized.set(id, authorize);
+        self.admin.get().unwrap().require_auth();
+        self.authorized.set(id, &authorize);
     }
 
     fn mint(&mut self, to: Address, amount: i128) {
-        self.admin.require_auth();
+        self.admin.get().unwrap().require_auth();
         let balance = self.balance(to.clone()) + amount;
-        self.balances.set(to, balance);
+        self.balances.set(to, &balance);
     }
 
     fn clawback(&mut self, from: Address, amount: i128) {
-        self.admin.require_auth();
+        self.admin.get().unwrap().require_auth();
         let balance = self.balance(from.clone()) - amount;
-        self.balances.set(from, balance);
+        self.balances.set(from, &balance);
     }
 
     fn set_admin(&mut self, new_admin: Address) {
-        self.admin.require_auth();
-        self.admin = new_admin;
+        self.admin.get().unwrap().require_auth();
+        self.admin.set(&new_admin);
     }
 }
