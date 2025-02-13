@@ -1,14 +1,13 @@
 #![no_std]
 
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, Env, IntoKey, Symbol},
-    subcontract,
+    soroban_sdk::{self, Env, IntoKey, Symbol, PersistentItem},
+    subcontract, loamstorage,
 };
 
-#[contracttype]
-#[derive(IntoKey, Default)]
+#[loamstorage]
 pub struct DeployerContractTrait {
-    value: u32,
+    value: PersistentItem<u32>,
 }
 
 #[subcontract]
@@ -19,10 +18,10 @@ pub trait IsDeployerContract {
 
 impl IsDeployerContract for DeployerContractTrait {
     fn init(&mut self, value: u32) {
-        self.value = value;
+        self.value.set(&value);
     }
 
     fn value(&self) -> u32 {
-        self.value
+        self.value.get().unwrap_or_default()
     }
 }

@@ -1,12 +1,11 @@
 #![no_std]
 
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, Bytes, BytesN, Env, RawVal, Symbol, Vec},
+    soroban_sdk::{self, contracttype, Bytes, BytesN, Env, RawVal, Symbol, Vec, Lazy},
     derive_contract, subcontract,
 };
 
-#[contracttype]
-#[derive(IntoKey)]
+#[derive(Lazy, Default)]
 pub struct Deployer;
 
 #[subcontract]
