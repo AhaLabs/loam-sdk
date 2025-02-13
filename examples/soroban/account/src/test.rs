@@ -7,7 +7,6 @@ use loam_sdk::soroban_sdk::symbol_short;
 use loam_sdk::soroban_sdk::Address;
 use loam_sdk::soroban_sdk::Val;
 use rand::thread_rng;
-//use loam_sdk::soroban_sdk::testutils::aut^i
 use loam_sdk::soroban_sdk::auth::{Context, ContractContext};
 use loam_sdk::soroban_sdk::{
     self,
@@ -15,7 +14,7 @@ use loam_sdk::soroban_sdk::{
     vec, BytesN, Env, IntoVal, Symbol,
 };
 
-use crate::AccError;
+use crate::Error;
 use crate::{Signature, SorobanContract__, SorobanContract__Client};
 
 fn generate_keypair() -> Keypair {
@@ -27,7 +26,7 @@ fn signer_public_key(e: &Env, signer: &Keypair) -> BytesN<32> {
 }
 
 fn create_account_contract(e: &Env) -> SorobanContract__Client {
-    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
+    SorobanContract__Client::new(e, &e.register( SorobanContract__, ()))
 }
 
 fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {
@@ -49,6 +48,7 @@ fn token_auth_context(e: &Env, token_id: &Address, fn_name: Symbol, amount: i128
     })
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test_token_auth() {
     let env = Env::default();
@@ -71,7 +71,7 @@ fn test_token_auth() {
     // `__check_auth` can't be called directly, hence we need to use
     // `try_invoke_contract_check_auth` testing utility that emulates being
     // called by the Soroban host during a `require_auth` call.
-    env.try_invoke_contract_check_auth::<AccError>(
+    env.try_invoke_contract_check_auth::<Error>(
         &account_contract.address,
         &payload,
         vec![&env, sign(&env, &signers[0], &payload)].into(),
@@ -81,7 +81,7 @@ fn test_token_auth() {
         ],
     )
     .unwrap();
-    env.try_invoke_contract_check_auth::<AccError>(
+    env.try_invoke_contract_check_auth::<Error>(
         &account_contract.address,
         &payload,
         vec![&env, sign(&env, &signers[0], &payload)].into(),
@@ -114,7 +114,7 @@ fn test_token_auth() {
     // 1 signer no longer can perform the token operation that transfers more
     // than 1000 units.
     assert_eq!(
-        env.try_invoke_contract_check_auth::<AccError>(
+        env.try_invoke_contract_check_auth::<Error>(
             &account_contract.address,
             &payload,
             vec![&env, sign(&env, &signers[0], &payload)].into(),
@@ -126,10 +126,10 @@ fn test_token_auth() {
         .err()
         .unwrap()
         .unwrap(),
-        AccError::NotEnoughSigners
+        Error::NotEnoughSigners
     );
     assert_eq!(
-        env.try_invoke_contract_check_auth::<AccError>(
+        env.try_invoke_contract_check_auth::<Error>(
             &account_contract.address,
             &payload,
             vec![&env, sign(&env, &signers[0], &payload)].into(),
@@ -141,11 +141,11 @@ fn test_token_auth() {
         .err()
         .unwrap()
         .unwrap(),
-        AccError::NotEnoughSigners
+        Error::NotEnoughSigners
     );
 
     // 1 signer can still transfer 1000 units.
-    env.try_invoke_contract_check_auth::<AccError>(
+    env.try_invoke_contract_check_auth::<Error>(
         &account_contract.address,
         &payload,
         vec![&env, sign(&env, &signers[0], &payload)].into(),
@@ -156,7 +156,7 @@ fn test_token_auth() {
     )
     .unwrap();
     // 2 signers can transfer any amount of token.
-    env.try_invoke_contract_check_auth::<AccError>(
+    env.try_invoke_contract_check_auth::<Error>(
         &account_contract.address,
         &payload,
         vec![

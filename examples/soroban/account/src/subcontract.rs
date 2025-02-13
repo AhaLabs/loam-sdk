@@ -1,12 +1,10 @@
 use loam_sdk::{
-    soroban_sdk::{
-        self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map,
-        Symbol, TryIntoVal, Vec,
-    },
-    subcontract, IntoKey,
+    loamstorage, soroban_sdk::{
+        self, auth::Context, contracttype, env, symbol_short, Address, BytesN, Env, Lazy, Map, PersistentItem, PersistentMap, Symbol, TryIntoVal, Vec 
+    }, subcontract
 };
 
-use crate::error::AccError;
+use crate::error::Error as AccError;
 
 const TRANSFER_FN: Symbol = symbol_short!("transfer");
 
@@ -17,22 +15,11 @@ pub struct Signature {
     pub signature: BytesN<64>,
 }
 
-#[contracttype]
-#[derive(IntoKey)]
+#[loamstorage]
 pub struct AccountManager {
-    limits: Map<Address, i128>,
-    signers: Map<BytesN<32>, ()>,
-    count: u32,
-}
-
-impl Default for AccountManager {
-    fn default() -> Self {
-        AccountManager {
-            limits: Map::new(env()),
-            signers: Map::new(env()),
-            count: 0,
-        }
-    }
+    limits: PersistentMap<Address, i128>,
+    signers: PersistentItem<Map<BytesN<32>, ()>>,
+    count: PersistentItem<u32>,
 }
 
 #[subcontract]
@@ -44,17 +31,19 @@ pub trait IsAccount {
         signature_payload: BytesN<32>,
         signatures: Vec<Signature>,
         auth_context: Vec<Context>,
-    ) -> Result<(), AccError>;
+    ) -> Result<(), crate::Error>;
 }
 
 impl IsAccount for AccountManager {
     fn init(&mut self, signers: Vec<BytesN<32>>) {
         // In reality this would need some additional validation on signers
         // (deduplication etc.).
+        let mut signers_set = Map::new(env());
         for signer in signers.iter() {
-            self.signers.set(signer, ());
+            signers_set.set(signer, ());
         }
-        self.count = signers.len();
+        self.count.set(&signers_set.len());
+        self.signers.set(&signers_set);
     }
 
     fn add_limit(&mut self, token: Address, limit: i128) {
@@ -65,7 +54,7 @@ impl IsAccount for AccountManager {
         // authorize the call on its own behalf and that wouldn't require any
         // user-side verification.
         env().current_contract_address().require_auth();
-        self.limits.set(token, limit);
+        self.limits.set(token, &limit);
     }
 
     // This is the 'entry point' of the account contract and every account
@@ -100,9 +89,9 @@ impl IsAccount for AccountManager {
         auth_context: Vec<Context>,
     ) -> Result<(), AccError> {
         // Perform authentication.
-        authenticate(env(), &self.signers, &signature_payload, &signatures)?;
+        authenticate(env(), &self.signers.get().unwrap(), &signature_payload, &signatures)?;
 
-        let tot_signers: u32 = self.count;
+        let tot_signers: u32 = self.count.get().unwrap();
         let all_signed = tot_signers == signatures.len();
 
         let curr_contract = env().current_contract_address();
@@ -114,14 +103,68 @@ impl IsAccount for AccountManager {
         let mut spend_left_per_token = Map::<Address, i128>::new(env());
         // Verify the authorization policy.
         for context in auth_context.iter() {
-            verify_authorization_policy(
+            self.verify_authorization_policy(
                 env(),
-                &self.limits,
                 &context,
                 &curr_contract,
                 all_signed,
                 &mut spend_left_per_token,
             )?;
+        }
+        Ok(())
+    }
+}
+
+impl AccountManager {
+    pub fn verify_authorization_policy(
+        &self,
+        env: &Env,
+        context: &Context,
+        curr_contract: &Address,
+        all_signed: bool,
+        spend_left_per_token: &mut Map<Address, i128>,
+    ) -> Result<(), AccError> {
+        let contract_context = match context {
+            Context::Contract(c) if &c.contract == curr_contract && !all_signed => c,
+            Context::Contract(_) => return Err(AccError::NotEnoughSigners),
+            Context::CreateContractHostFn(_) | Context::CreateContractWithCtorHostFn(_) => {
+                return Err(AccError::InvalidContext)
+            }
+        };
+        // For the account control every signer must sign the invocation.
+    
+        // Otherwise, we're only interested in functions that spend tokens.
+        if contract_context.fn_name != TRANSFER_FN
+            && contract_context.fn_name != Symbol::new(env, "approve")
+        {
+            return Ok(());
+        }
+    
+        let spend_left: Option<i128> =
+            if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
+                Some(spend_left)
+            } else {
+                self.limits.get(contract_context.contract.clone())
+            };
+    
+        // 'None' means that the contract is outside of the policy.
+        if let Some(spend_left) = spend_left {
+            // 'amount' is the third argument in both `approve` and `transfer`.
+            // If the contract has a different signature, it's safer to panic
+            // here, as it's expected to have the standard interface.
+            let spent: i128 = contract_context
+                .args
+                .get(2)
+                .unwrap()
+                .try_into_val(env)
+                .unwrap();
+            if spent < 0 {
+                return Err(AccError::NegativeAmount);
+            }
+            if !all_signed && spent > spend_left {
+                return Err(AccError::NotEnoughSigners);
+            }
+            spend_left_per_token.set(contract_context.contract.clone(), spend_left - spent);
         }
         Ok(())
     }
@@ -153,55 +196,4 @@ fn authenticate(
     Ok(())
 }
 
-fn verify_authorization_policy(
-    env: &Env,
-    limits: &Map<Address, i128>,
-    context: &Context,
-    curr_contract: &Address,
-    all_signed: bool,
-    spend_left_per_token: &mut Map<Address, i128>,
-) -> Result<(), AccError> {
-    let contract_context = match context {
-        Context::Contract(c) if &c.contract == curr_contract && !all_signed => c,
-        Context::Contract(_) => return Err(AccError::NotEnoughSigners),
-        Context::CreateContractHostFn(_) | Context::CreateContractWithCtorHostFn(_) => {
-            return Err(AccError::InvalidContext)
-        }
-    };
-    // For the account control every signer must sign the invocation.
 
-    // Otherwise, we're only interested in functions that spend tokens.
-    if contract_context.fn_name != TRANSFER_FN
-        && contract_context.fn_name != Symbol::new(env, "approve")
-    {
-        return Ok(());
-    }
-
-    let spend_left: Option<i128> =
-        if let Some(spend_left) = spend_left_per_token.get(contract_context.contract.clone()) {
-            Some(spend_left)
-        } else {
-            limits.get(contract_context.contract.clone())
-        };
-
-    // 'None' means that the contract is outside of the policy.
-    if let Some(spend_left) = spend_left {
-        // 'amount' is the third argument in both `approve` and `transfer`.
-        // If the contract has a different signature, it's safer to panic
-        // here, as it's expected to have the standard interface.
-        let spent: i128 = contract_context
-            .args
-            .get(2)
-            .unwrap()
-            .try_into_val(env)
-            .unwrap();
-        if spent < 0 {
-            return Err(AccError::NegativeAmount);
-        }
-        if !all_signed && spent > spend_left {
-            return Err(AccError::NotEnoughSigners);
-        }
-        spend_left_per_token.set(contract_context.contract.clone(), spend_left - spent);
-    }
-    Ok(())
-}
