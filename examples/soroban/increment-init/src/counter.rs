@@ -1,11 +1,13 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, IntoKey, Lazy},
+    loamstorage,
+    soroban_sdk::{self, Lazy, PersistentItem},
     subcontract,
 };
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct Counter(u32);
+#[loamstorage]
+pub struct Counter{
+    count: PersistentItem<u32>
+}
 
 #[subcontract]
 pub trait IsCountable {
@@ -18,11 +20,13 @@ pub trait IsCountable {
 impl IsCountable for Counter {
     /// Increment increments an internal counter, and returns the value.
     fn increment(&mut self) -> u32 {
-        self.0 += 1;
-        self.0
+        let mut count = self.count.get().unwrap();
+        count += 1;
+        self.count.set(&count);
+        count
     }
 
     fn init(&mut self, num: u32) {
-        self.0 = num;
+        self.count.set(&num);
     }
 }
