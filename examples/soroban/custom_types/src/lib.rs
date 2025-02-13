@@ -5,9 +5,9 @@ pub mod subcontract;
 
 use subcontract::State;
 
-use subcontract::{Increment, IncrementContract};
+use subcontract::{Incrementable, Inc};
 
-#[loam_sdk::derive_contract(Core(Admin), Increment(IncrementContract))]
+#[loam_sdk::derive_contract(Core(Admin), Incrementable(Inc))]
 pub struct Contract;
 
 mod test;

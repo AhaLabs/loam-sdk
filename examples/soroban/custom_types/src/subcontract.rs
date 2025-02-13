@@ -1,6 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, IntoKey, Lazy},
-    subcontract,
+    loamstorage, soroban_sdk::{self, contracttype, env, Lazy, PersistentItem}, subcontract
 };
 
 #[contracttype]
@@ -10,24 +9,27 @@ pub struct State {
     pub last_incr: u32,
 }
 
-#[contracttype]
-#[derive(IntoKey, Default)]
-pub struct IncrementContract(State);
+#[loamstorage]
+pub struct Inc {
+    s: PersistentItem<State>
+}
 
 #[subcontract]
-pub trait IsIncrement {
+pub trait IsIncrementable {
     fn increment(&mut self, incr: u32) -> u32;
     fn get_state(&self) -> State;
 }
 
-impl IsIncrement for IncrementContract {
+impl IsIncrementable for Inc {
     fn increment(&mut self, incr: u32) -> u32 {
-        self.0.count += incr;
-        self.0.last_incr = incr;
-        self.0.count
+        let mut state = self.s.get().unwrap_or_default();
+        state.count += incr;
+        state.last_incr = incr;
+        self.s.set(&state);
+        state.count
     }
 
     fn get_state(&self) -> State {
-        self.0.clone()
+        self.s.get().unwrap_or_default()
     }
 }

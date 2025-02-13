@@ -6,7 +6,7 @@ use loam_sdk::soroban_sdk::Env;
 #[test]
 fn test() {
     let env = Env::default();
-    let contract_id = env.register_contract(None, SorobanContract__);
+    let contract_id = env.register(SorobanContract__, ());
     let client = SorobanContract__Client::new(&env, &contract_id);
 
     assert_eq!(client.increment(&1), 1);
