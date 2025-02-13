@@ -14,7 +14,7 @@ fn test() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, SorobanContract__);
+    let contract_id = env.register(SorobanContract__, ());
     let client = SorobanContract__Client::new(&env, &contract_id);
 
     let user_1 = Address::generate(&env);
