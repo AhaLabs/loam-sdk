@@ -37,7 +37,7 @@ async fn dev_command_watches_for_changes_and_environments_toml() {
             )
             .await;
 
-            TestEnv::wait_for_output(&mut stderr_lines, &format!("cargo rustc")).await;
+            TestEnv::wait_for_output(&mut stderr_lines, "cargo rustc").await;
 
             TestEnv::wait_for_output(
                 &mut stderr_lines,
