@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 // Currently need to import `self` because `contracttype` expects it in the namespace
 use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, IntoKey, Lazy, Map, String},

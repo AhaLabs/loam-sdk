@@ -1,6 +1,6 @@
 [package]
 name = "loam-soroban-sdk"
-version = "0.6.15"
+version = "0.6.16"
 edition = "2021"
 description = "A wrapper around the soroban-sdk, providing some soroban specific traits"
 license = "Apache-2.0"
@@ -10,7 +10,8 @@ repository = "https://github.com/loambuild/loam/tree/main/crates/loam-soroban-sd
 crate-type = ["rlib"]
 
 [dependencies]
-loam-sdk-macro = { path = "../loam-sdk-macro", version = "0.8.5" }
+loam-sdk-macro = { path = "../loam-sdk-macro", version = "0.8.6" }
+soroban-sdk = { workspace = true, default-features = false }
 
 [target.'cfg(target_family="wasm")'.dependencies]
 soroban-sdk = { workspace = true }

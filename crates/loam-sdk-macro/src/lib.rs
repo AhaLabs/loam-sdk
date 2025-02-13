@@ -3,6 +3,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use std::env;
 use subcontract::derive_contract_impl;
+use subcontract::storage;
 
 use quote::quote;
 use syn::Item;
@@ -25,6 +26,7 @@ pub fn subcontract(_: TokenStream, item: TokenStream) -> TokenStream {
     subcontract::generate(&parsed).into()
 }
 
+#[deprecated(since = "0.9.0", note = "Please use #[loamstorage] instead.")]
 #[proc_macro_derive(IntoKey)]
 pub fn into_key(item: TokenStream) -> TokenStream {
     syn::parse::<Item>(item)
@@ -67,7 +69,8 @@ pub fn import_contract(tokens: TokenStream) -> TokenStream {
     let binding = dir.canonicalize().unwrap();
     let file = binding.to_str().unwrap();
     quote! {
-        pub mod #name {
+        pub(crate) mod #name {
+            #![allow(clippy::ref_option, clippy::too_many_arguments)]
             use loam_sdk::soroban_sdk;
             loam_sdk::soroban_sdk::contractimport!(file = #file);
         }
@@ -114,7 +117,6 @@ pub fn derive_contract(args: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Panics
 ///
-
 #[proc_macro]
 pub fn stellar_asset(input: TokenStream) -> TokenStream {
     // Parse the input as a string literal
@@ -124,4 +126,11 @@ pub fn stellar_asset(input: TokenStream) -> TokenStream {
 
     // Return the generated code as a TokenStream
     asset.into()
+}
+
+#[proc_macro_attribute]
+pub fn loamstorage(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    syn::parse::<Item>(item)
+        .and_then(storage::from_item)
+        .map_or_else(|e| e.to_compile_error().into(), Into::into)
 }

@@ -1,7 +1,8 @@
 [workspace]
 resolver = "2"
-members = ["crates/*", "test/*", "examples/soroban/*"]
-exclude = ["test/*", "examples/soroban/*", "examples/soroban/cross_contract", "examples/soroban/deployer"]
+default-members = ["crates/*"]
+members = ["crates/*", "test/*", "examples/soroban/*", "examples/soroban/cross_contract/*"]
+exclude = ["test/*", "examples/soroban/cross_contract", "examples/soroban/deployer"]
 # include = ["examples/soroban/cross_contract/*", "examples/soroban/deployer/*"]
 
 [workspace.package]
@@ -15,8 +16,8 @@ loam-soroban-sdk = { path = "./crates/loam-soroban-sdk" }
 loam-sdk-macro = { path = "./crates/loam-sdk-macro" }
 loam-subcontract-ft = { path = "./crates/loam-subcontract-ft" }
 
-soroban-sdk = "21.2.0"
-stellar-xdr = "21.2.0"
+soroban-sdk = "22.0.0-rc.3"
+stellar-xdr = "22.0.0-rc.1.1"
 stellar-strkey = "0.0.11"
 
 cargo_metadata = "0.18.1"

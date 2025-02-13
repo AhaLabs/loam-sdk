@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use loam_sdk::{
     soroban_sdk::{self, contracttype, env, Address, Lazy, Map, String},
     IntoKey,

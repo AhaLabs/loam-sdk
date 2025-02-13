@@ -162,13 +162,11 @@ fn verify_authorization_policy(
     spend_left_per_token: &mut Map<Address, i128>,
 ) -> Result<(), AccError> {
     let contract_context = match context {
-        Context::Contract(c) => {
-            if &c.contract == curr_contract && !all_signed {
-                return Err(AccError::NotEnoughSigners);
-            }
-            c
+        Context::Contract(c) if &c.contract == curr_contract && !all_signed => c,
+        Context::Contract(_) => return Err(AccError::NotEnoughSigners),
+        Context::CreateContractHostFn(_) | Context::CreateContractWithCtorHostFn(_) => {
+            return Err(AccError::InvalidContext)
         }
-        Context::CreateContractHostFn(_) => return Err(AccError::InvalidContext),
     };
     // For the account control every signer must sign the invocation.
 

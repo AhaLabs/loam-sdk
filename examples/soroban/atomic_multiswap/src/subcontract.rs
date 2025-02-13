@@ -4,7 +4,7 @@ use loam_sdk::{
     subcontract,
 };
 
-use crate::atomic_swap;
+use crate::example_atomic_swap as atomic_swap;
 
 #[derive(Clone)]
 #[contracttype]

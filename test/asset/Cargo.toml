@@ -1,7 +1,8 @@
 [package]
-name = "example-account"
+name = "asset"
+description = "Simple asset"
 version = "0.0.0"
-authors = ["Stellar Development Foundation <info@stellar.org>"]
+authors = ["Aha Labs <help@ahalabs.dev>"]
 license = "Apache-2.0"
 edition = "2021"
 publish = false
@@ -13,12 +14,10 @@ doctest = false
 [dependencies]
 loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
 loam-subcontract-core = { workspace = true }
-example-token = { path = "../token" }
+loam-subcontract-ft = { workspace = true }
 
 [dev-dependencies]
 loam-sdk = { workspace = true, features = ["soroban-sdk-testutils"] }
-ed25519-dalek = { version = "1.0.1" }
-rand = { version = "0.7.3" }
 
 [package.metadata.loam]
 contract = true

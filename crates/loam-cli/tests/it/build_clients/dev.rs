@@ -130,3 +130,61 @@ soroban_token_contract.client = false
     })
     .await;
 }
+
+#[tokio::test]
+async fn dev_command_start_local_stellar_with_run_locally() {
+    TestEnv::from_async("soroban-init-boilerplate", |env| async {
+        Box::pin(async move {
+            // Set environments.toml with run_locally enabled
+            env.set_environments_toml(
+                r#"
+development.accounts = [
+    { name = "alice" },
+]
+
+[development.network]
+rpc-url = "http://localhost:8000/rpc"
+network-passphrase = "Standalone Network ; February 2017"
+run-locally = true
+
+[development.contracts]
+hello_world.client = true
+soroban_increment_contract.client = true
+soroban_custom_types_contract.client = false
+soroban_auth_contract.client = false
+soroban_token_contract.client = false
+"#,
+            );
+
+            let mut dev_process = env
+                .loam_process("dev", &["--build-clients"])
+                .current_dir(&env.cwd)
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .expect("Failed to spawn dev process");
+
+            let stderr = dev_process.stderr.take().unwrap();
+            let mut stderr_lines = LinesStream::new(BufReader::new(stderr).lines());
+
+            TestEnv::wait_for_output(
+                &mut stderr_lines,
+                "Starting local Stellar Docker container...",
+            )
+            .await;
+
+            TestEnv::wait_for_output(
+                &mut stderr_lines,
+                "Local Stellar network is healthy and running.",
+            )
+            .await;
+
+            dev_process
+                .kill()
+                .await
+                .expect("Failed to kill dev process");
+        })
+        .await;
+    })
+    .await;
+}

@@ -23,6 +23,9 @@ struct ExampleStatusMessage;
 pub struct Cmd {
     /// The path to the project must be provided to initialize
     pub project_path: PathBuf,
+    /// The name of the project
+    #[arg(default_value = "loam-example")]
+    pub name: String,
 }
 /// Errors that can occur during initialization
 #[derive(thiserror::Error, Debug)]
@@ -53,8 +56,9 @@ impl Cmd {
         // Examples cannot currently be added by user
         soroban_init::Cmd {
             project_path: self.project_path.to_string_lossy().to_string(),
-            with_example: vec![],
-            frontend_template: FRONTEND_TEMPLATE.to_string(),
+            name: self.name.clone(),
+            with_example: None,
+            frontend_template: Some(FRONTEND_TEMPLATE.to_string()),
             overwrite: true,
         }
         .run(&soroban_cli::commands::global::Args::default())?;

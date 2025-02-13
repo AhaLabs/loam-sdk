@@ -15,27 +15,24 @@ Build **composable**, **upgradeable**, **secure** Smart Contracts.
 
 # Subcontracts
 
-A subcontract is a type that implements the `IntoKey` trait, which is used for lazily loading and storing the type.
+A subcontract is a type that implements the `Lazy` trait, which is used for lazily loading and storing the type. Use the `loamstorage` macro along with special `loam` storage types - `PersistentMap`, `InstanceMap`, `TemporaryMap` (for key-value pair storage); `PersistentItem`, `InstanceItem`, `TemporaryItem` (for singleton storage). These map to `soroban` `Persistent`, `Instance`, and `Temporary` storage types.
 
 ## Creating  Subcontracts
 
 Here's an example of how to create a subcontract:
 
 ```rust
-#[contracttype]
-#[derive(IntoKey)]
-pub struct Messages(Map<Address, String>);
+#[loamstorage]
+#[derive(Default)]
+pub struct Token { 
+    balance: PersistentMap<Address, i128>,
+    symbol: InstanceItem<String>,
+};
 ```
 
-This generates the following implementation:
-
-```rust
-impl IntoKey for Messages {
-    type Key = IntoVal<Env, RawVal>;
-    fn into_key() -> Self::Key {
-      String::from_slice("messages")
-    }
-```
+This generates an implementation to access the `Persistent` and `Instance` storage 
+mechanisms of `env.storage()`. These can be accessed via `balance.set`, `balance.get`, etc.
+Time to live can be extended via `balance.extend_ttl`. 
 
 ## External API
 
