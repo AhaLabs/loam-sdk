@@ -2137,7 +2137,7 @@ dependencies = [
 
 [[package]]
 name = "loam-cli"
-version = "0.14.4"
+version = "0.14.5"
 dependencies = [
  "assert_cmd",
  "assert_fs",
@@ -2180,7 +2180,7 @@ dependencies = [
 
 [[package]]
 name = "loam-sdk"
-version = "0.6.16"
+version = "0.6.17"
 dependencies = [
  "loam-sdk-macro",
  "loam-soroban-sdk",
@@ -2189,7 +2189,7 @@ dependencies = [
 
 [[package]]
 name = "loam-sdk-macro"
-version = "0.8.6"
+version = "0.8.7"
 dependencies = [
  "Inflector",
  "assert_fs",
@@ -2211,7 +2211,7 @@ dependencies = [
 
 [[package]]
 name = "loam-soroban-sdk"
-version = "0.6.16"
+version = "0.6.17"
 dependencies = [
  "loam-sdk-macro",
  "soroban-sdk",
@@ -2219,14 +2219,14 @@ dependencies = [
 
 [[package]]
 name = "loam-subcontract-core"
-version = "0.7.9"
+version = "0.7.10"
 dependencies = [
  "loam-sdk",
 ]
 
 [[package]]
 name = "loam-subcontract-ft"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "loam-sdk",
 ]
