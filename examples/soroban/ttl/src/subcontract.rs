@@ -1,18 +1,17 @@
-use loam_sdk::soroban_sdk::{self, contracttype, env, Lazy};
-use loam_sdk::subcontract;
+use loam_sdk::soroban_sdk::{self, env, InstanceItem, Lazy, PersistentItem, TemporaryItem};
+use loam_sdk::{loamstorage, subcontract};
 
-#[contracttype]
-pub enum DataKey {
-    MyKey,
+#[loamstorage]
+pub struct TtlContract {
+    p: PersistentItem<u32>,
+    i: InstanceItem<u32>,
+    t: TemporaryItem<u32>,
 }
-
-#[derive(Lazy, Default)]
-pub struct TtlContract;
 
 #[subcontract]
 pub trait IsTtl {
     /// Creates a contract entry in every kind of storage.
-    fn setup(&self);
+    fn setup(&mut self);
     /// Extend the persistent entry TTL to 5000 ledgers, when its
     /// TTL is smaller than 1000 ledgers.
     fn extend_persistent(&self);
@@ -26,33 +25,27 @@ pub trait IsTtl {
 
 impl IsTtl for TtlContract {
     /// Creates a contract entry in every kind of storage.
-    fn setup(&self) {
-        env().storage().persistent().set(&DataKey::MyKey, &0);
-        env().storage().instance().set(&DataKey::MyKey, &1);
-        env().storage().temporary().set(&DataKey::MyKey, &2);
+    fn setup(&mut self) {
+        self.p.set(&0);
+        self.i.set(&1);
+        self.t.set(&2);
     }
 
     /// Extend the persistent entry TTL to 5000 ledgers, when its
     /// TTL is smaller than 1000 ledgers.
     fn extend_persistent(&self) {
-        env()
-            .storage()
-            .persistent()
-            .extend_ttl(&DataKey::MyKey, 1000, 5000);
+        self.p.extend_ttl(1000, 5000);
     }
 
     /// Extend the instance entry TTL to become at least 10000 ledgers,
     /// when its TTL is smaller than 2000 ledgers.
     fn extend_instance(&self) {
-        env().storage().instance().extend_ttl(2000, 10000);
+        self.i.extend_ttl(2000, 10000);
     }
 
     /// Extend the temporary entry TTL to become at least 7000 ledgers,
     /// when its TTL is smaller than 3000 ledgers.
     fn extend_temporary(&self) {
-        env()
-            .storage()
-            .temporary()
-            .extend_ttl(&DataKey::MyKey, 3000, 7000);
+        self.t.extend_ttl(3000, 7000);
     }
 }
