@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.17](https://github.com/loambuild/loam/compare/loam-soroban-sdk-v0.6.16...loam-soroban-sdk-v0.6.17) - 2025-02-14
+
+### Fixed
+
+- clippy and others warning messages (#184)
+
 ## [0.6.16](https://github.com/loambuild/loam/compare/loam-soroban-sdk-v0.6.15...loam-soroban-sdk-v0.6.16) - 2025-01-22
 
 ### Added

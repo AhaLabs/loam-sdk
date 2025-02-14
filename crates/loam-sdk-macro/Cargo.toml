@@ -1,6 +1,6 @@
 [package]
 name = "loam-sdk-macro"
-version = "0.8.6"
+version = "0.8.7"
 edition = "2021"
 description = "Macros needed by loam-sdk"
 license = "Apache-2.0"
