@@ -181,9 +181,8 @@ rpc-url = "http://localhost:8000/rpc"
 network-passphrase = "Standalone Network ; February 2017"
 
 [production.contracts]
-hello_world.id = "{}"
-"#,
-            contract_id
+hello_world.id = "{contract_id}"
+"#
         ));
 
         // ensure production can identify via contract ID

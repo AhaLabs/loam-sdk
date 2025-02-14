@@ -8,3 +8,5 @@ pub use status_message::*;
 
 #[derive_contract(Core(Admin), Postable(StatusMessage))]
 pub struct Contract;
+
+mod test;

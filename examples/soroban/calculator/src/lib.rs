@@ -9,3 +9,5 @@ use subcontract::{Calc, Calculator};
 
 #[loam_sdk::derive_contract(Core(Admin), Calc(Calculator))]
 pub struct Contract;
+
+mod test;

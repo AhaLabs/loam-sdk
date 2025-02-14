@@ -1,0 +1,22 @@
+[package]
+name = "example-atomic-multiswap"
+version = "0.0.0"
+authors = ["Stellar Development Foundation <info@stellar.org>"]
+license = "Apache-2.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+loam-sdk = { workspace = true, features = ["loam-soroban-sdk"] }
+loam-subcontract-core = { workspace = true }
+example-atomic-swap = { path = "../atomic_swap" }
+
+[dev-dependencies]
+assert_unordered = "0.3.5"
+
+[package.metadata.loam]
+contract = true
