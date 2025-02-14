@@ -11,7 +11,7 @@ use token::Client as TokenClient;
 use token::StellarAssetClient as TokenAdminClient;
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, TokenAdminClient<'a>) {
-    let sac = e.register_stellar_asset_contract(admin.clone());
+    let sac = e.register_stellar_asset_contract_v2(admin.clone()).address();
     (
         token::Client::new(e, &sac),
         token::StellarAssetClient::new(e, &sac),
@@ -19,7 +19,7 @@ fn create_token_contract<'a>(e: &Env, admin: &Address) -> (TokenClient<'a>, Toke
 }
 
 fn create_claimable_balance_contract<'a>(e: &Env) -> SorobanContract__Client<'a> {
-    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
+    SorobanContract__Client::new(e, &e.register(SorobanContract__, ()))
 }
 
 struct ClaimableBalanceTest<'a> {

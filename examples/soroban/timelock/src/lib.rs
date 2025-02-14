@@ -8,7 +8,7 @@ use loam_subcontract_core::{admin::Admin, Core};
 
 mod error;
 mod timelock;
-use error::TimelockError;
+use error::Error;
 pub use timelock::*;
 
 #[derive_contract(Core(Admin), TimelockTrait(Timelock))]

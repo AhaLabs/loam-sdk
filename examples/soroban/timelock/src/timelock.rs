@@ -5,11 +5,10 @@
 //! account(s) claim it before or after provided time point.
 //! For simplicity, the contract only supports invoker-based auth.
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Env, IntoKey, Lazy, Vec},
-    subcontract,
+    loamstorage, soroban_sdk::{self, contracttype, env, Address, Env, Lazy, PersistentItem, Vec}, subcontract
 };
 
-use crate::error::TimelockError;
+use crate::error::Error;
 
 #[contracttype]
 #[derive(Clone)]
@@ -34,26 +33,9 @@ pub struct ClaimableBalance {
     pub time_bound: TimeBound,
 }
 
-#[contracttype]
-#[derive(IntoKey, Clone)]
+#[loamstorage]
 pub struct Timelock {
-    balance: ClaimableBalance,
-}
-
-impl Default for Timelock {
-    fn default() -> Self {
-        Self {
-            balance: ClaimableBalance {
-                token: env().current_contract_address(),
-                amount: 0,
-                claimants: Vec::new(env()),
-                time_bound: TimeBound {
-                    kind: TimeBoundKind::Before,
-                    timestamp: 0,
-                },
-            },
-        }
-    }
+    balance: PersistentItem<ClaimableBalance>,
 }
 
 // The 'timelock' part: check that provided timestamp is before/after
@@ -75,8 +57,8 @@ pub trait IsTimelockTrait {
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
-    ) -> Result<(), TimelockError>;
-    fn claim(&mut self, claimant: Address) -> Result<(), TimelockError>;
+    ) -> Result<(), Error>;
+    fn claim(&mut self, claimant: Address) -> Result<(), Error>;
 }
 
 impl IsTimelockTrait for Timelock {
@@ -87,50 +69,52 @@ impl IsTimelockTrait for Timelock {
         amount: i128,
         claimants: Vec<Address>,
         time_bound: TimeBound,
-    ) -> Result<(), TimelockError> {
+    ) -> Result<(), Error> {
         if claimants.len() > 10 {
-            return Err(TimelockError::TooManyClaimants);
+            return Err(Error::TooManyClaimants);
         }
-        if !self.balance.claimants.is_empty() {
-            return Err(TimelockError::AlreadyInitialized);
+        if self.balance.has() {
+            return Err(Error::AlreadyInitialized);
         }
         from.require_auth();
 
         let token_client = soroban_sdk::token::Client::new(env(), &token.clone());
         token_client.transfer(&from, &env().current_contract_address(), &amount);
 
-        self.balance = ClaimableBalance {
+        self.balance.set(&ClaimableBalance {
             token,
             amount,
             claimants,
             time_bound,
-        };
+        });
         Ok(())
     }
 
-    fn claim(&mut self, claimant: Address) -> Result<(), TimelockError> {
+    fn claim(&mut self, claimant: Address) -> Result<(), Error> {
         claimant.require_auth();
+        let mut balance = self.balance.get().unwrap();
 
-        if self.balance.amount == 0 {
-            return Err(TimelockError::BalanceAlreadyClaimed);
+        if balance.amount == 0 {
+            return Err(Error::BalanceAlreadyClaimed);
         }
 
-        if !check_time_bound(env(), &self.balance.time_bound) {
-            return Err(TimelockError::TimePredicateNotFulfilled);
+        if !check_time_bound(env(), &balance.time_bound) {
+            return Err(Error::TimePredicateNotFulfilled);
         }
 
-        if !self.balance.claimants.contains(&claimant) {
-            return Err(TimelockError::ClaimantNotAllowed);
+        if !balance.claimants.contains(&claimant) {
+            return Err(Error::ClaimantNotAllowed);
         }
 
-        let token_client = soroban_sdk::token::Client::new(env(), &self.balance.token.clone());
+        let token_client = soroban_sdk::token::Client::new(env(), &balance.token.clone());
         token_client.transfer(
             &env().current_contract_address(),
             &claimant,
-            &self.balance.amount,
+            &balance.amount,
         );
 
-        self.balance.amount = 0;
+        balance.amount = 0;
+        self.balance.set(&balance);
         Ok(())
     }
 }
