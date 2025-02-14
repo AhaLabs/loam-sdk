@@ -18,5 +18,5 @@ pub fn create_contract(
     let salt = e.crypto().sha256(&salt);
     e.deployer()
         .with_current_contract(salt)
-        .deploy(token_wasm_hash.clone())
+        .deploy_v2(token_wasm_hash.clone(), ())
 }

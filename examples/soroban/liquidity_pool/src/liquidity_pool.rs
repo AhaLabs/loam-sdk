@@ -1,12 +1,11 @@
 use crate::{error::Error, token::example_token as token};
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, BytesN, IntoKey, IntoVal, Lazy},
-    subcontract,
+    loamstorage, soroban_sdk::{self, contracttype, env, Address, BytesN, InstanceItem, IntoVal, Lazy}, subcontract
 };
 use num_integer::Roots;
 
 #[contracttype]
-#[derive(IntoKey)]
+#[derive(Clone)]
 pub struct LiquidityPool {
     token_a: Address,
     token_b: Address,
@@ -15,6 +14,12 @@ pub struct LiquidityPool {
     reserve_a: i128,
     reserve_b: i128,
 }
+
+#[loamstorage]
+pub struct Storage {
+    pool: InstanceItem<LiquidityPool>,
+}
+
 
 impl Default for LiquidityPool {
     fn default() -> Self {
@@ -57,7 +62,7 @@ pub trait IsLiquidityPoolTrait {
     fn get_rsrvs(&self) -> (i128, i128);
 }
 
-impl IsLiquidityPoolTrait for LiquidityPool {
+impl IsLiquidityPoolTrait for Storage {
     fn initialize(
         &mut self,
         token_wasm_hash: BytesN<32>,
@@ -76,19 +81,21 @@ impl IsLiquidityPoolTrait for LiquidityPool {
             &"Pool Share Token".into_val(env()),
             &"POOL".into_val(env()),
         );
-        self.token_a = token_a;
-        self.token_b = token_b;
-        self.token_share = share_contract_id;
-        self.total_shares = 0;
-        self.reserve_a = 0;
-        self.reserve_b = 0;
+        let pool = LiquidityPool {
+            token_a,
+            token_b,
+            token_share: share_contract_id,
+            ..Default::default()
+        };
+        self.pool.set(&pool);
         Ok(())
     }
 
     fn share_id(&self) -> Address {
-        self.token_share.clone()
+        self.pool.get().unwrap().token_share.clone()
     }
 
+    #[allow(clippy::similar_names)]
     fn deposit(
         &mut self,
         to: Address,
@@ -99,8 +106,9 @@ impl IsLiquidityPoolTrait for LiquidityPool {
     ) -> Result<(), Error> {
         // Depositor needs to authorize the deposit
         to.require_auth();
+        let mut pool = self.pool.get().unwrap();
 
-        let (reserve_a, reserve_b) = (self.reserve_a, self.reserve_b);
+        let (reserve_a, reserve_b) = (pool.reserve_a, pool.reserve_b);
 
         // Calculate deposit amounts
         let amounts =
@@ -109,8 +117,8 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         if amounts.0 <= 0 || amounts.1 <= 0 {
             return Err(Error::DepositAmountsMustBePositive);
         }
-        let token_a_client = token::Client::new(env(), &self.token_a);
-        let token_b_client = token::Client::new(env(), &self.token_b);
+        let token_a_client = token::Client::new(env(), &pool.token_a);
+        let token_b_client = token::Client::new(env(), &pool.token_b);
 
         token_a_client.transfer(&to, &env().current_contract_address(), &amounts.0);
         token_b_client.transfer(&to, &env().current_contract_address(), &amounts.1);
@@ -123,26 +131,27 @@ impl IsLiquidityPoolTrait for LiquidityPool {
 
         let zero = 0;
         let new_total_shares = if reserve_a > zero && reserve_b > zero {
-            let shares_a = (balance_a * self.total_shares) / reserve_a;
-            let shares_b = (balance_b * self.total_shares) / reserve_b;
+            let shares_a = (balance_a * pool.total_shares) / reserve_a;
+            let shares_b = (balance_b * pool.total_shares) / reserve_b;
             shares_a.min(shares_b)
         } else {
             (balance_a * balance_b).sqrt()
         };
 
-        let shares_to_mint = new_total_shares - self.total_shares;
-        token::Client::new(env(), &self.token_share).mint(&to, &shares_to_mint);
+        let shares_to_mint = new_total_shares - pool.total_shares;
+        token::Client::new(env(), &pool.token_share).mint(&to, &shares_to_mint);
 
-        self.total_shares = new_total_shares;
-        self.reserve_a = balance_a;
-        self.reserve_b = balance_b;
+        pool.total_shares = new_total_shares;
+        pool.reserve_a = balance_a;
+        pool.reserve_b = balance_b;
+        self.pool.set(&pool);
         Ok(())
     }
 
     fn swap(&mut self, to: Address, buy_a: bool, out: i128, in_max: i128) -> Result<(), Error> {
         to.require_auth();
-
-        let (reserve_a, reserve_b) = (self.reserve_a, self.reserve_b);
+        let mut pool = self.pool.get().unwrap();
+        let (reserve_a, reserve_b) = (pool.reserve_a, pool.reserve_b);
         let (reserve_sell, reserve_buy) = if buy_a {
             (reserve_b, reserve_a)
         } else {
@@ -159,16 +168,16 @@ impl IsLiquidityPoolTrait for LiquidityPool {
 
         // Transfer the amount being sold to the contract
         let sell_token = if buy_a {
-            self.token_b.clone()
+            pool.token_b.clone()
         } else {
-            self.token_a.clone()
+            pool.token_a.clone()
         };
         let sell_token_client = token::Client::new(env(), &sell_token);
         sell_token_client.transfer(&to, &env().current_contract_address(), &sell_amount);
 
         let (balance_a, balance_b) = (
-            token::Client::new(env(), &self.token_a).balance(&env().current_contract_address()),
-            token::Client::new(env(), &self.token_b).balance(&env().current_contract_address()),
+            token::Client::new(env(), &pool.token_a).balance(&env().current_contract_address()),
+            token::Client::new(env(), &pool.token_b).balance(&env().current_contract_address()),
         );
 
         // residue_numerator and residue_denominator are the amount that the invariant considers after
@@ -199,13 +208,13 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         }
 
         if buy_a {
-            token::Client::new(env(), &self.token_a).transfer(
+            token::Client::new(env(), &pool.token_a).transfer(
                 &env().current_contract_address(),
                 &to,
                 &out_a,
             );
         } else {
-            token::Client::new(env(), &self.token_b).transfer(
+            token::Client::new(env(), &pool.token_b).transfer(
                 &env().current_contract_address(),
                 &to,
                 &out_b,
@@ -219,9 +228,9 @@ impl IsLiquidityPoolTrait for LiquidityPool {
             return Err(Error::NewReservesMustBePositive);
         }
 
-        self.reserve_a = new_reserve_a;
-        self.reserve_b = new_reserve_b;
-
+        pool.reserve_a = new_reserve_a;
+        pool.reserve_b = new_reserve_b;
+        self.pool.set(&pool);
         Ok(())
     }
 
@@ -233,47 +242,49 @@ impl IsLiquidityPoolTrait for LiquidityPool {
         min_b: i128,
     ) -> Result<(i128, i128), Error> {
         to.require_auth();
+        let mut pool = self.pool.get().unwrap();
 
         // First transfer the pool shares that need to be redeemed
-        let share_token_client = token::Client::new(env(), &self.token_share);
+        let share_token_client = token::Client::new(env(), &pool.token_share);
         share_token_client.transfer(&to, &env().current_contract_address(), &share_amount);
 
         let (balance_a, balance_b) = (
-            token::Client::new(env(), &self.token_a).balance(&env().current_contract_address()),
-            token::Client::new(env(), &self.token_b).balance(&env().current_contract_address()),
+            token::Client::new(env(), &pool.token_a).balance(&env().current_contract_address()),
+            token::Client::new(env(), &pool.token_b).balance(&env().current_contract_address()),
         );
         let balance_shares = share_token_client.balance(&env().current_contract_address());
 
         // Now calculate the withdraw amounts
-        let out_a = (balance_a * balance_shares) / self.total_shares;
-        let out_b = (balance_b * balance_shares) / self.total_shares;
+        let out_a = (balance_a * balance_shares) / pool.total_shares;
+        let out_b = (balance_b * balance_shares) / pool.total_shares;
 
         if out_a < min_a || out_b < min_b {
             return Err(Error::MinimumNotSatisfied);
         }
 
         share_token_client.burn(&env().current_contract_address(), &balance_shares);
-        self.total_shares -= balance_shares;
+        pool.total_shares -= balance_shares;
 
-        token::Client::new(env(), &self.token_a).transfer(
+        token::Client::new(env(), &pool.token_a).transfer(
             &env().current_contract_address(),
             &to,
             &out_a,
         );
-        token::Client::new(env(), &self.token_b).transfer(
+        token::Client::new(env(), &pool.token_b).transfer(
             &env().current_contract_address(),
             &to,
             &out_b,
         );
 
-        self.reserve_a = balance_a - out_a;
-        self.reserve_b = balance_b - out_b;
-
+        pool.reserve_a = balance_a - out_a;
+        pool.reserve_b = balance_b - out_b;
+        self.pool.set(&pool);
         Ok((out_a, out_b))
     }
 
     fn get_rsrvs(&self) -> (i128, i128) {
-        (self.reserve_a, self.reserve_b)
+        let pool = self.pool.get().unwrap();
+        (pool.reserve_a, pool.reserve_b)
     }
 }
 

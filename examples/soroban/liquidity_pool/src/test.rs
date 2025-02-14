@@ -11,7 +11,7 @@ use loam_sdk::soroban_sdk::{
 };
 
 fn create_token_contract<'a>(e: &Env, admin: &Address) -> token::Client<'a> {
-    token::Client::new(e, &e.register_stellar_asset_contract(admin.clone()))
+    token::Client::new(e, &e.register_stellar_asset_contract_v2(admin.clone()).address())
 }
 
 fn create_liqpool_contract<'a>(
@@ -20,7 +20,7 @@ fn create_liqpool_contract<'a>(
     token_a: &Address,
     token_b: &Address,
 ) -> SorobanContract__Client<'a> {
-    let liqpool = SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}));
+    let liqpool = SorobanContract__Client::new(e, &e.register(SorobanContract__, ()));
     liqpool.initialize(token_wasm_hash, token_a, token_b);
     liqpool
 }
@@ -30,6 +30,7 @@ fn install_token_wasm(e: &Env) -> BytesN<32> {
     e.deployer().upload_contract_wasm(example_token::WASM)
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     let e = Env::default();
@@ -162,6 +163,7 @@ fn test() {
 }
 
 #[test]
+#[allow(clippy::should_panic_without_expect)]
 #[should_panic]
 fn deposit_amount_zero_should_panic() {
     let e = Env::default();
@@ -197,6 +199,7 @@ fn deposit_amount_zero_should_panic() {
 }
 
 #[test]
+#[allow(clippy::should_panic_without_expect)]
 #[should_panic]
 fn swap_reserve_one_nonzero_other_zero() {
     let e = Env::default();

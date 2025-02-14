@@ -10,7 +10,7 @@ pub mod token;
 use crate::error::Error;
 pub use liquidity_pool::*;
 
-#[derive_contract(Core(Admin), LiquidityPoolTrait(LiquidityPool))]
+#[derive_contract(Core(Admin), LiquidityPoolTrait(Storage))]
 pub struct Contract;
 
 mod test;
