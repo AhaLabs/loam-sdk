@@ -11,7 +11,7 @@ fn test_status_message() {
 
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, SorobanContract__);
+    let contract_id = env.register(SorobanContract__, ());
     let status_message = SorobanContract__Client::new(&env, &contract_id);
 
     // Create a test address
