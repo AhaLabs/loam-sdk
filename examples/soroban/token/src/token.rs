@@ -1,6 +1,5 @@
 use loam_sdk::{
-    soroban_sdk::{self, contracttype, env, Address, Bytes, Env, IntoKey, Lazy, Map},
-    subcontract,
+    loamstorage, soroban_sdk::{self, contracttype, env, Address, Bytes, Env, InstanceItem, Lazy, PersistentMap}, subcontract
 };
 
 use crate::error::Error;
@@ -58,27 +57,21 @@ pub enum DataKey {
     Admin,
 }
 
-#[contracttype]
-#[derive(IntoKey, Clone)]
+#[loamstorage]
 pub struct Token {
-    admin: Address,
-    decimal: u32,
-    name: Bytes,
-    symbol: Bytes,
-    balances: Map<Address, i128>,
+    admin: InstanceItem<Address>,
+    decimal: InstanceItem<u32>,
+    name: InstanceItem<Bytes>,
+    symbol: InstanceItem<Bytes>,
+    balances: PersistentMap<Address, i128>,
 }
 
-impl Default for Token {
-    fn default() -> Self {
-        Self {
-            admin: env().current_contract_address(),
-            decimal: 0,
-            name: Bytes::from_array(env(), &[]),
-            symbol: Bytes::from_array(env(), &[]),
-            balances: Map::new(env()),
-        }
+impl Token {
+    pub fn require_admin(&self)  {
+        self.admin.get().unwrap().require_auth();
     }
 }
+
 
 #[subcontract]
 pub trait IsTokenTrait {
@@ -123,14 +116,13 @@ impl IsTokenTrait for Token {
         name: Bytes,
         symbol: Bytes,
     ) -> Result<(), Error> {
-        if self.admin != env().current_contract_address() {
+        if self.admin.has() {
             return Err(Error::AlreadyInitialized);
         }
-        self.admin = admin;
-        self.decimal = decimal;
-        self.name = name;
-        self.symbol = symbol;
-        self.balances = Map::new(env());
+        self.admin.set(&admin);
+        self.decimal.set(&decimal);
+        self.name.set(&name);
+        self.symbol.set(&symbol);
         Ok(())
     }
 
@@ -153,8 +145,8 @@ impl IsTokenTrait for Token {
         if from_balance < amount {
             return Err(Error::InsufficientBalance);
         }
-        self.balances.set(from, from_balance - amount);
-        self.balances.set(to, to_balance + amount);
+        self.balances.set(from, &(from_balance - amount));
+        self.balances.set(to, &(to_balance + amount));
         Ok(())
     }
 
@@ -180,8 +172,8 @@ impl IsTokenTrait for Token {
         if from_balance < amount {
             return Err(Error::InsufficientBalance);
         }
-        self.balances.set(from, from_balance - amount);
-        self.balances.set(to, to_balance + amount);
+        self.balances.set(from, &(from_balance - amount));
+        self.balances.set(to, &(to_balance + amount));
         Ok(())
     }
 
@@ -191,7 +183,7 @@ impl IsTokenTrait for Token {
         if balance < amount {
             return Err(Error::InsufficientBalance);
         }
-        self.balances.set(from, balance - amount);
+        self.balances.set(from, &(balance - amount));
         Ok(())
     }
 
@@ -210,31 +202,31 @@ impl IsTokenTrait for Token {
         if balance < amount {
             return Err(Error::InsufficientBalance);
         }
-        self.balances.set(from, balance - amount);
+        self.balances.set(from, &(balance - amount));
         Ok(())
     }
 
     fn mint(&mut self, to: Address, amount: i128) {
-        self.admin.require_auth();
+        self.require_admin();
         let balance = self.balance(to.clone());
-        self.balances.set(to, balance + amount);
+        self.balances.set(to, &(balance + amount));
     }
 
     fn set_admin(&mut self, new_admin: Address) {
-        self.admin.require_auth();
-        self.admin = new_admin;
+        self.require_admin();
+        self.admin.set(&new_admin);
     }
 
     fn decimals(&self) -> u32 {
-        self.decimal
+        self.decimal.get().unwrap()
     }
 
     fn name(&self) -> Bytes {
-        self.name.clone()
+        self.name.get().unwrap()
     }
 
     fn symbol(&self) -> Bytes {
-        self.symbol.clone()
+        self.symbol.get().unwrap()
     }
 
     fn approve(

@@ -9,11 +9,12 @@ use loam_sdk::soroban_sdk::{
 };
 
 fn create_token<'a>(e: &Env, admin: &Address) -> SorobanContract__Client<'a> {
-    let token = SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}));
+    let token = SorobanContract__Client::new(e, &e.register(SorobanContract__, ()));
     token.initialize(admin, &7, &"name".into_val(e), &"symbol".into_val(e));
     token
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     let e = Env::default();
