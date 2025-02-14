@@ -1,7 +1,7 @@
 #![no_std]
 use loam_sdk::{
     derive_contract, loamstorage,
-    soroban_sdk::{self, env, Address, InstanceItem, Lazy, LoamKey, PersistentMap, String},
+    soroban_sdk::{self, env, Address, InstanceItem, Lazy, PersistentMap, String},
     subcontract,
 };
 

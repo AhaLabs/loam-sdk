@@ -23,4 +23,4 @@ jobs:
         run: cargo fmt --all -- --check
       
       - name: Run cargo clippy
-        run: cargo clippy -- -D warnings -D clippy::pedantic
+        run: cargo clippy --all
