@@ -13,7 +13,7 @@ use loam_subcontract_core::{admin::Admin, Core};
 pub mod error;
 pub mod subcontract;
 
-use error::SimpleAccError;
+use error::Error;
 use subcontract::{SimpleAccount, SimpleAccountManager};
 
 #[derive_contract(Core(Admin), SimpleAccount(SimpleAccountManager))]

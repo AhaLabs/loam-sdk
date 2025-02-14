@@ -16,7 +16,7 @@ fn generate_keypair() -> Keypair {
 }
 
 fn create_account_contract(e: &Env) -> SorobanContract__Client {
-    SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}))
+    SorobanContract__Client::new(e, &e.register(SorobanContract__, ()))
 }
 
 fn sign(e: &Env, signer: &Keypair, payload: &BytesN<32>) -> Val {
