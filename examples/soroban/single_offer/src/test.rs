@@ -12,7 +12,7 @@ fn create_token_contract<'a>(
     e: &Env,
     admin: &Address,
 ) -> (token::Client<'a>, token::StellarAssetClient<'a>) {
-    let sac = e.register_stellar_asset_contract(admin.clone());
+    let sac = e.register_stellar_asset_contract_v2(admin.clone()).address();
     (
         token::Client::new(e, &sac),
         token::StellarAssetClient::new(e, &sac),
@@ -27,7 +27,7 @@ fn create_single_offer_contract<'a>(
     sell_price: u32,
     buy_price: u32,
 ) -> SorobanContract__Client<'a> {
-    let offer = SorobanContract__Client::new(e, &e.register_contract(None, SorobanContract__ {}));
+    let offer = SorobanContract__Client::new(e, &e.register(SorobanContract__, ()));
     offer.create(seller, sell_token, buy_token, &sell_price, &buy_price);
 
     // Verify that authorization is required for the seller.
@@ -145,7 +145,7 @@ fn test() {
     assert_eq!(sell_token_client.balance(&offer.address), 20);
 
     // The price here is 1 sell_token = 1 buy_token.
-    offer.updt_price(&1, &1);
+    offer.update_price(&1, &1);
     // Verify that the seller has to authorize this.
     assert_eq!(
         e.auths(),
@@ -154,7 +154,7 @@ fn test() {
             AuthorizedInvocation {
                 function: AuthorizedFunction::Contract((
                     offer.address.clone(),
-                    Symbol::new(&e, "updt_price"),
+                    Symbol::new(&e, "update_price"),
                     (1_u32, 1_u32).into_val(&e)
                 )),
                 sub_invocations: std::vec![]

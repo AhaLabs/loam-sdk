@@ -6,10 +6,10 @@ use loam_subcontract_core::{admin::Admin, Core};
 
 mod error;
 mod single_offer;
-use error::SingleOfferError;
+use error::Error;
 pub use single_offer::*;
 
-#[derive_contract(Core(Admin), SingleOfferTrait(SingleOffer))]
+#[derive_contract(Core(Admin), SingleOfferTrait(Storage))]
 pub struct Contract;
 
 mod test;
