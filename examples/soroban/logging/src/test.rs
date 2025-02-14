@@ -14,9 +14,9 @@ fn test() {
 
     let id_bytes = BytesN::from_array(&env, &[8; 32]);
 
-    let addr: Address =
+    let _addr: Address =
         Address::try_from_val(&env, &ScAddress::Contract(Hash(id_bytes.to_array()))).unwrap();
-    let contract_id = env.register_contract(&addr, SorobanContract__);
+    let contract_id = env.register( SorobanContract__, ());
     let client = SorobanContract__Client::new(&env, &contract_id);
 
     client.hello(&symbol_short!("Dev"));
