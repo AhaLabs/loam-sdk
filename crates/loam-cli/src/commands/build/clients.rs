@@ -244,7 +244,7 @@ impl Args {
         let network = std::env::var("STELLAR_NETWORK_PASSPHRASE")
             .expect("No STELLAR_NETWORK_PASSPHRASE environment variable set");
         let template = format!(
-            r#"import * as Client from '{name}';
+            r"import * as Client from '{name}';
 import {{ rpcUrl }} from './util';
     
 export default new Client.Client({{
@@ -253,7 +253,7 @@ export default new Client.Client({{
   rpcUrl,{allow_http}
   publicKey: undefined,
 }});
-"#
+"
         );
         let path = workspace_root.join(format!("src/contracts/{name}.ts"));
         std::fs::write(path, template)?;

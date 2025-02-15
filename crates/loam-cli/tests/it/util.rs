@@ -19,6 +19,7 @@ pub struct TestEnv {
 }
 
 pub trait AssertExt {
+    #[allow(unused)]
     fn stdout_as_str(&self) -> String;
     fn stderr_as_str(&self) -> String;
 }
@@ -49,23 +50,6 @@ impl TestEnv {
             cwd: temp_dir.path().join(template),
             temp_dir,
         }
-    }
-
-    pub fn find_binary(name: &str) -> Option<PathBuf> {
-        let exe_path = env::current_exe().ok()?;
-        let project_root = Self::find_project_root(&exe_path)?;
-        Some(project_root.join("target").join("bin").join(name))
-    }
-
-    fn find_project_root(start_path: &Path) -> Option<PathBuf> {
-        let mut current = start_path;
-        while let Some(parent) = current.parent() {
-            if parent.join("Cargo.toml").exists() {
-                return Some(parent.to_path_buf());
-            }
-            current = parent;
-        }
-        None
     }
 
     pub fn from<F: FnOnce(&TestEnv)>(template: &str, f: F) {
@@ -244,4 +228,21 @@ impl TestEnv {
         self.cwd = new_dir.join(template);
         Ok(())
     }
+}
+
+pub fn find_binary(name: &str) -> Option<PathBuf> {
+    let exe_path = env::current_exe().ok()?;
+    let project_root = find_project_root(&exe_path)?;
+    Some(project_root.join("target").join("bin").join(name))
+}
+
+fn find_project_root(start_path: &Path) -> Option<PathBuf> {
+    let mut current = start_path;
+    while let Some(parent) = current.parent() {
+        if parent.join("Cargo.toml").exists() {
+            return Some(parent.to_path_buf());
+        }
+        current = parent;
+    }
+    None
 }
