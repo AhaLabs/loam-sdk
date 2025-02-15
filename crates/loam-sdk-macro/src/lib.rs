@@ -69,8 +69,8 @@ pub fn import_contract(tokens: TokenStream) -> TokenStream {
     let binding = dir.canonicalize().unwrap();
     let file = binding.to_str().unwrap();
     quote! {
-        mod #name {
-            #![allow(clippy::ref_option)]
+        pub(crate) mod #name {
+            #![allow(clippy::ref_option, clippy::too_many_arguments)]
             use loam_sdk::soroban_sdk;
             loam_sdk::soroban_sdk::contractimport!(file = #file);
         }

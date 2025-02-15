@@ -1,19 +1,14 @@
 #![allow(deprecated)]
 // Currently need to import `self` because `contracttype` expects it in the namespace
 use loam_sdk::{
-    log,
-    soroban_sdk::{self, contracttype, env, to_string, Address, IntoKey, Lazy, Map, String},
+    loamstorage,
+    soroban_sdk::{self, env, Address, Lazy, PersistentMap, String},
     subcontract,
 };
 
-#[contracttype]
-#[derive(IntoKey)]
-pub struct StatusMessage(Map<Address, String>);
-
-impl Default for StatusMessage {
-    fn default() -> Self {
-        Self(Map::new(env()))
-    }
+#[loamstorage]
+pub struct StatusMessage {
+    messages: PersistentMap<Address, String>,
 }
 
 #[subcontract]
@@ -31,15 +26,12 @@ pub trait IsPostable {
 }
 
 impl IsPostable for StatusMessage {
-    fn messages_get(&self, author: Address) -> String {
-        self.0
-            .get(author)
-            .unwrap_or_else(|| to_string("No message"))
+    fn messages_get(&self, author: Address) -> Option<String> {
+        self.messages.get(author)
     }
 
     fn messages_set(&mut self, author: Address, text: String) {
         author.require_auth();
-        log!("Setting message {} for {}", text, author);
-        self.0.set(author, text);
+        self.messages.set(author, &text);
     }
 }

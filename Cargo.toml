@@ -1,7 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["crates/*", "test/*", "examples/soroban/*"]
-exclude = ["test/*", "examples/soroban/*"]
+default-members = ["crates/*"]
+members = ["crates/*", "test/*", "examples/soroban/*", "examples/soroban/cross_contract/*"]
+exclude = ["test/*", "examples/soroban/cross_contract", "examples/soroban/deployer"]
+# include = ["examples/soroban/cross_contract/*", "examples/soroban/deployer/*"]
 
 [workspace.package]
 repository = "https://github.com/loambuild/loam"

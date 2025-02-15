@@ -6,19 +6,18 @@ description = "A wrapper around the soroban-sdk, providing some soroban specific
 license = "Apache-2.0"
 repository = "https://github.com/loambuild/loam/tree/main/crates/loam-soroban-sdk"
 
-
 [lib]
 crate-type = ["rlib"]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 loam-sdk-macro = { path = "../loam-sdk-macro", version = "0.8.6" }
 soroban-sdk = { workspace = true }
 
+[target.'cfg(target_family="wasm")'.dependencies]
+soroban-sdk = { workspace = true }
+
 [target.'cfg(not(target_family="wasm"))'.dependencies]
 soroban-sdk = { workspace = true, features = ["testutils"] }
-
 
 [features]
 default = []
